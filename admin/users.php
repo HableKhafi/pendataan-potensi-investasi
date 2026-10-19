@@ -4,7 +4,6 @@ require_once '../config/database.php';
 require_once '../includes/auth.php';
 
 /** @var PDO $pdo */
-
 $user_role = $_SESSION['role'] ?? '';
 $is_superadmin = in_array($user_role, ['superadmin', 'super_admin']);
 
@@ -13,7 +12,7 @@ if (!$is_superadmin) {
     exit;
 }
 
-// Proses Tambah User
+// Tambah User
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah_user'])) {
     $nama     = trim($_POST['nama'] ?? '');
     $email    = trim($_POST['email'] ?? '');
@@ -27,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah_user'])) {
     exit;
 }
 
-// Proses Edit User
+// Edit User
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
     $id_user  = (int)$_POST['id_user'];
     $nama     = trim($_POST['nama'] ?? '');
@@ -47,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
     exit;
 }
 
-// Proses Hapus User
+// Hapus User
 if (isset($_GET['action']) && $_GET['action'] === 'delete') {
     $id_user = (int)$_GET['id'];
     $stmt = $pdo->prepare("DELETE FROM users WHERE id_user = :id");
@@ -64,21 +63,6 @@ $users = $pdo->query("SELECT id_user, nama, email, role, status, created_at FROM
 <head>
     <meta charset="UTF-8">
     <title>Kelola User - DPMPTSP Banjarbaru</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-    
-    <style>
-        body { min-height: 100vh; background-color: #f8f9fa; }
-        .wrapper { display: flex; width: 100%; align-items: stretch; }
-        #sidebar { min-width: 250px; max-width: 250px; background: #212529; color: #fff; min-height: 100vh; }
-        #sidebar .sidebar-header { padding: 20px; background: #1a1d20; border-bottom: 1px solid #2c3034; }
-        #sidebar ul.components { padding: 15px 0; }
-        #sidebar ul li a { padding: 12px 20px; font-size: 0.95rem; display: block; color: #adb5bd; text-decoration: none; transition: 0.2s; }
-        #sidebar ul li a:hover, #sidebar ul li.active > a { color: #fff; background: #0d6efd; }
-        #sidebar ul li a i { margin-right: 10px; }
-        #content { width: 100%; padding: 25px; min-height: 100vh; }
-    </style>
 </head>
 <body>
 
@@ -87,11 +71,19 @@ $users = $pdo->query("SELECT id_user, nama, email, role, status, created_at FROM
 
     <div id="content">
         <h4 class="mb-4 fw-bold">Kelola Akun Pengguna</h4>
+        
+        <?php if (isset($_GET['msg']) && $_GET['msg'] === 'added'): ?>
+            <div class="alert alert-success alert-dismissible fade show">Akun pengguna baru berhasil ditambahkan!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        <?php elseif (isset($_GET['msg']) && $_GET['msg'] === 'updated'): ?>
+            <div class="alert alert-success alert-dismissible fade show">Data akun berhasil diperbarui!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        <?php elseif (isset($_GET['msg']) && $_GET['msg'] === 'deleted'): ?>
+            <div class="alert alert-success alert-dismissible fade show">Akun pengguna berhasil dihapus!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        <?php endif; ?>
+
         <div class="row">
             <div class="col-md-4">
-                <div class="card p-3 border-0 shadow-sm">
-                    <h5>Tambah Akun Baru</h5>
-                    <hr>
+                <div class="card card-modern p-4">
+                    <h5 class="fw-bold mb-3">Tambah Akun Baru</h5>
                     <form method="POST">
                         <div class="mb-3">
                             <label class="form-label">Nama Lengkap</label>
@@ -118,47 +110,52 @@ $users = $pdo->query("SELECT id_user, nama, email, role, status, created_at FROM
             </div>
 
             <div class="col-md-8">
-                <div class="card p-3 border-0 shadow-sm">
-                    <h5>Daftar Akun Terdaftar</h5>
-                    <hr>
-                    <table id="tableUsers" class="table table-hover align-middle w-100">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>No</th>
-                                <th>Nama</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th class="text-center">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php $no = 1; foreach ($users as $u): ?>
-                            <tr>
-                                <td><?= $no++ ?></td>
-                                <td><?= htmlspecialchars($u['nama']) ?></td>
-                                <td><?= htmlspecialchars($u['email']) ?></td>
-                                <td>
-                                    <span class="badge <?= in_array($u['role'], ['superadmin', 'super_admin']) ? 'bg-danger' : 'bg-primary' ?>">
-                                        <?= htmlspecialchars($u['role']) ?>
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-warning btn-edit-user" 
-                                                data-id="<?= $u['id_user'] ?>" 
-                                                data-nama="<?= htmlspecialchars($u['nama']) ?>" 
-                                                data-email="<?= htmlspecialchars($u['email']) ?>" 
-                                                data-role="<?= htmlspecialchars($u['role']) ?>" 
-                                                data-bs-toggle="modal" data-bs-target="#modalEditUser">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <a href="users.php?action=delete&id=<?= $u['id_user'] ?>" class="btn btn-danger"  title="Hapus"><i class="bi bi-trash"></i></a>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                <div class="card card-modern p-4">
+                    <h5 class="fw-bold mb-3">Daftar Akun Terdaftar</h5>
+                    <div class="table-responsive">
+                        <table id="tableUsers" class="table table-modern align-middle w-100">
+                            <thead>
+                                <tr>
+                                    <th width="5%">No</th>
+                                    <th>Nama</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th class="text-center" width="15%">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $no = 1; foreach ($users as $u): ?>
+                                <tr>
+                                    <td class="fw-semibold text-muted"><?= $no++ ?></td>
+                                    <td class="fw-bold text-dark"><?= htmlspecialchars($u['nama']) ?></td>
+                                    <td class="text-muted"><?= htmlspecialchars($u['email']) ?></td>
+                                    <td>
+                                        <?php if (in_array($u['role'], ['superadmin', 'super_admin'])): ?>
+                                            <span class="badge badge-soft-danger px-2 py-1"><i class="bi bi-shield-lock me-1"></i> Superadmin</span>
+                                        <?php else: ?>
+                                            <span class="badge badge-soft-primary px-2 py-1"><i class="bi bi-person me-1"></i> Admin</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex gap-1 justify-content-center">
+                                            <button class="btn btn-sm btn-outline-warning btn-action btn-edit-user" 
+                                                    data-id="<?= $u['id_user'] ?>" 
+                                                    data-nama="<?= htmlspecialchars($u['nama']) ?>" 
+                                                    data-email="<?= htmlspecialchars($u['email']) ?>" 
+                                                    data-role="<?= htmlspecialchars($u['role']) ?>" 
+                                                    data-bs-toggle="modal" data-bs-target="#modalEditUser" title="Edit">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </button>
+                                            <a href="users.php?action=delete&id=<?= $u['id_user'] ?>" class="btn btn-sm btn-outline-danger btn-action" title="Hapus">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -170,7 +167,7 @@ $users = $pdo->query("SELECT id_user, nama, email, role, status, created_at FROM
     <div class="modal-dialog">
         <form method="POST" class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Edit User</h5>
+                <h5 class="modal-title fw-bold">Edit User</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -209,7 +206,6 @@ $users = $pdo->query("SELECT id_user, nama, email, role, status, created_at FROM
 <script>
     $(document).ready(function() {
         $('#tableUsers').DataTable();
-
         $('.btn-edit-user').click(function() {
             $('#edit_user_id').val($(this).data('id'));
             $('#edit_user_nama').val($(this).data('nama'));
@@ -217,54 +213,6 @@ $users = $pdo->query("SELECT id_user, nama, email, role, status, created_at FROM
             $('#edit_user_role').val($(this).data('role'));
         });
     });
-    // Konfirmasi Form Tambah / Edit
-document.querySelectorAll('form').forEach(form => {
-    form.addEventListener('submit', function(e) {
-        e.preventDefault(); // Hentikan submit langsung
-        
-        const isEdit = form.querySelector('[name*="edit"]') !== null || window.location.href.includes('edit');
-        const titleText = isEdit ? 'Simpan Perubahan?' : 'Tambah Data Baru?';
-        const confirmText = isEdit ? 'Ya, Perbarui!' : 'Ya, Simpan!';
-
-        Swal.fire({
-            title: titleText,
-            text: "Pastikan data yang diinputkan sudah benar.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmColor: '#0d6efd',
-            cancelColor: '#6c757d',
-            confirmButtonText: confirmText,
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                form.submit(); // Jalankan submit form jika ditekan Ya
-            }
-        });
-    });
-});
-
-// Konfirmasi Tombol Hapus
-document.querySelectorAll('.btn-danger').forEach(button => {
-    button.addEventListener('click', function(e) {
-        e.preventDefault();
-        const targetUrl = this.getAttribute('href');
-
-        Swal.fire({
-            title: 'Apakah Anda Yakin?',
-            text: "Data yang dihapus tidak dapat dikembalikan!",
-            icon: 'error',
-            showCancelButton: true,
-            confirmColor: '#dc3545',
-            cancelColor: '#6c757d',
-            confirmButtonText: 'Ya, Hapus Data!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = targetUrl;
-            }
-        });
-    });
-});
 </script>
 </body>
 </html>

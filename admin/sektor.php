@@ -4,10 +4,9 @@ require_once '../config/database.php';
 require_once '../includes/auth.php';
 
 /** @var PDO $pdo */
-
 $error = '';
 
-// 1. Proses Tambah Sektor
+// Tambah Sektor
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah_sektor'])) {
     $kode_sektor = trim($_POST['kode_sektor'] ?? '');
     $nama_sektor = trim($_POST['nama_sektor'] ?? '');
@@ -20,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah_sektor'])) {
         $stmt_check->execute([':kode' => $kode_sektor]);
         
         if ($stmt_check->fetch()) {
-            $error = "Kode sektor '$kode_sektor' sudah digunakan! Silakan gunakan kode sektor lain.";
+            $error = "Kode sektor '$kode_sektor' sudah digunakan!";
         } else {
             try {
                 $stmt = $pdo->prepare("INSERT INTO sektor (kode_sektor, nama_sektor, deskripsi, status) VALUES (:kode, :nama, :deskripsi, 1)");
@@ -34,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah_sektor'])) {
     }
 }
 
-// 2. Proses Edit Sektor
+// Edit Sektor
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_sektor'])) {
     $id_sektor   = (int)$_POST['id_sektor'];
     $kode_sektor = trim($_POST['kode_sektor'] ?? '');
@@ -58,22 +57,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_sektor'])) {
     }
 }
 
-// 3. Proses Hapus Sektor PERMANEN dari Database (Hard Delete)
+// Hard Delete Sektor
 if (isset($_GET['action']) && $_GET['action'] === 'delete') {
     $id_sektor = (int)$_GET['id'];
 
-    // Cek apakah sektor ini masih terikat dengan data potensi_investasi
     $stmt_check = $pdo->prepare("SELECT COUNT(*) FROM potensi_investasi WHERE id_sektor = :id");
     $stmt_check->execute([':id' => $id_sektor]);
-    $is_used = $stmt_check->fetchColumn();
-
-    if ($is_used > 0) {
-        // Jika masih dipakai, batalkan penghapusan
+    
+    if ($stmt_check->fetchColumn() > 0) {
         header("Location: sektor.php?msg=used");
         exit;
     } else {
         try {
-            // Hapus permanen dari tabel sektor di database
             $stmt = $pdo->prepare("DELETE FROM sektor WHERE id_sektor = :id");
             $stmt->execute([':id' => $id_sektor]);
             header("Location: sektor.php?msg=deleted");
@@ -93,9 +88,6 @@ $sektor = $pdo->query("SELECT * FROM sektor ORDER BY id_sektor DESC")->fetchAll(
 <head>
     <meta charset="UTF-8">
     <title>Kelola Sektor - DPMPTSP Banjarbaru</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 </head>
 <body>
 
@@ -105,32 +97,24 @@ $sektor = $pdo->query("SELECT * FROM sektor ORDER BY id_sektor DESC")->fetchAll(
     <div id="content">
         <h4 class="mb-4 fw-bold">Kelola Sektor Investasi</h4>
 
-        <!-- Notifikasi Pesan -->
         <?php if (!empty($error)): ?>
-            <div class="alert alert-danger alert-dismissible fade show">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i><?= htmlspecialchars($error) ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
+            <div class="alert alert-danger alert-dismissible fade show"><i class="bi bi-exclamation-triangle-fill me-2"></i><?= htmlspecialchars($error) ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
         <?php endif; ?>
 
         <?php if (isset($_GET['msg']) && $_GET['msg'] === 'used'): ?>
-            <div class="alert alert-warning alert-dismissible fade show">
-                <i class="bi bi-exclamation-circle-fill me-2"></i>Sektor tidak dapat dihapus permanen dari database karena masih digunakan oleh data Potensi Investasi!
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
+            <div class="alert alert-warning alert-dismissible fade show"><i class="bi bi-exclamation-circle-fill me-2"></i>Sektor tidak dapat dihapus karena masih digunakan oleh data Potensi Investasi!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
         <?php elseif (isset($_GET['msg']) && $_GET['msg'] === 'added'): ?>
             <div class="alert alert-success alert-dismissible fade show">Sektor baru berhasil ditambahkan!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
         <?php elseif (isset($_GET['msg']) && $_GET['msg'] === 'updated'): ?>
             <div class="alert alert-success alert-dismissible fade show">Data sektor berhasil diperbarui!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
         <?php elseif (isset($_GET['msg']) && $_GET['msg'] === 'deleted'): ?>
-            <div class="alert alert-success alert-dismissible fade show">Sektor berhasil dihapus permanen dari database!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+            <div class="alert alert-success alert-dismissible fade show">Sektor berhasil dihapus permanen!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
         <?php endif; ?>
 
         <div class="row">
             <div class="col-md-4">
-                <div class="card p-3 border-0 shadow-sm">
-                    <h5>Tambah Sektor Baru</h5>
-                    <hr>
+                <div class="card card-modern p-4">
+                    <h5 class="fw-bold mb-3">Tambah Sektor Baru</h5>
                     <form method="POST">
                         <div class="mb-3">
                             <label class="form-label">Kode Sektor *</label>
@@ -150,43 +134,46 @@ $sektor = $pdo->query("SELECT * FROM sektor ORDER BY id_sektor DESC")->fetchAll(
             </div>
 
             <div class="col-md-8">
-                <div class="card p-3 border-0 shadow-sm">
-                    <h5>Daftar Sektor</h5>
-                    <hr>
-                    <table id="tableSektor" class="table table-hover align-middle w-100">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>No</th>
-                                <th>Kode</th>
-                                <th>Nama Sektor</th>
-                                <th>Deskripsi</th>
-                                <th class="text-center">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php $no=1; foreach ($sektor as $s): ?>
-                            <tr>
-                                <td><?= $no++ ?></td>
-                                <td><span class="badge bg-secondary"><?= htmlspecialchars($s['kode_sektor']) ?></span></td>
-                                <td><strong><?= htmlspecialchars($s['nama_sektor']) ?></strong></td>
-                                <td><?= htmlspecialchars($s['deskripsi'] ?? '-') ?></td>
-                                <td class="text-center">
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-warning btn-edit" 
-                                                data-id="<?= $s['id_sektor'] ?>" 
-                                                data-kode="<?= htmlspecialchars($s['kode_sektor']) ?>" 
-                                                data-nama="<?= htmlspecialchars($s['nama_sektor']) ?>" 
-                                                data-deskripsi="<?= htmlspecialchars($s['deskripsi'] ?? '') ?>" 
-                                                data-bs-toggle="modal" data-bs-target="#modalEditSektor">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <a href="sektor.php?action=delete&id=<?= $s['id_sektor'] ?>" class="btn btn-danger" title="Hapus"><i class="bi bi-trash"></i></a>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                <div class="card card-modern p-4">
+                    <h5 class="fw-bold mb-3">Daftar Sektor</h5>
+                    <div class="table-responsive">
+                        <table id="tableSektor" class="table table-modern align-middle w-100">
+                            <thead>
+                                <tr>
+                                    <th width="5%">No</th>
+                                    <th width="15%">Kode</th>
+                                    <th>Nama Sektor</th>
+                                    <th>Deskripsi</th>
+                                    <th class="text-center" width="15%">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $no=1; foreach ($sektor as $s): ?>
+                                <tr>
+                                    <td class="fw-semibold text-muted"><?= $no++ ?></td>
+                                    <td><span class="badge badge-soft-primary px-2 py-1"><?= htmlspecialchars($s['kode_sektor']) ?></span></td>
+                                    <td class="fw-bold text-dark"><?= htmlspecialchars($s['nama_sektor']) ?></td>
+                                    <td class="text-muted"><?= htmlspecialchars($s['deskripsi'] ?? '-') ?></td>
+                                    <td class="text-center">
+                                        <div class="d-flex gap-1 justify-content-center">
+                                            <button class="btn btn-sm btn-outline-warning btn-action btn-edit" 
+                                                    data-id="<?= $s['id_sektor'] ?>" 
+                                                    data-kode="<?= htmlspecialchars($s['kode_sektor']) ?>" 
+                                                    data-nama="<?= htmlspecialchars($s['nama_sektor']) ?>" 
+                                                    data-deskripsi="<?= htmlspecialchars($s['deskripsi'] ?? '') ?>" 
+                                                    data-bs-toggle="modal" data-bs-target="#modalEditSektor" title="Edit">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </button>
+                                            <a href="sektor.php?action=delete&id=<?= $s['id_sektor'] ?>" class="btn btn-sm btn-outline-danger btn-action" title="Hapus">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -198,7 +185,7 @@ $sektor = $pdo->query("SELECT * FROM sektor ORDER BY id_sektor DESC")->fetchAll(
     <div class="modal-dialog">
         <form method="POST" class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Edit Sektor</h5>
+                <h5 class="modal-title fw-bold">Edit Sektor</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -230,7 +217,6 @@ $sektor = $pdo->query("SELECT * FROM sektor ORDER BY id_sektor DESC")->fetchAll(
 <script>
     $(document).ready(function() {
         $('#tableSektor').DataTable();
-
         $('.btn-edit').click(function() {
             $('#edit_id').val($(this).data('id'));
             $('#edit_kode').val($(this).data('kode'));

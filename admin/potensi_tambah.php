@@ -4,7 +4,6 @@ require_once '../config/database.php';
 require_once '../includes/auth.php';
 
 /** @var PDO $pdo */
-
 $sektor    =$pdo->query("SELECT * FROM sektor WHERE status = 1")->fetchAll();
 $kecamatan =$pdo->query("SELECT * FROM kecamatan WHERE status = 1")->fetchAll();
 
@@ -49,19 +48,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {$kode_potensi      = 'POT-' . time()
 <head>
     <meta charset="UTF-8">
     <title>Tambah Potensi Investasi</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        body { min-height: 100vh; background-color: #f8f9fa; }
-        .wrapper { display: flex; width: 100%; align-items: stretch; }
-        #sidebar { min-width: 250px; max-width: 250px; background: #212529; color: #fff; min-height: 100vh; }
-        #sidebar .sidebar-header { padding: 20px; background: #1a1d20; border-bottom: 1px solid #2c3034; }
-        #sidebar ul.components { padding: 15px 0; }
-        #sidebar ul li a { padding: 12px 20px; font-size: 0.95rem; display: block; color: #adb5bd; text-decoration: none; transition: 0.2s; }
-        #sidebar ul li a:hover, #sidebar ul li.active > a { color: #fff; background: #0d6efd; }
-        #sidebar ul li a i { margin-right: 10px; }
-        #content { width: 100%; padding: 25px; min-height: 100vh; }
-    </style>
 </head>
 <body>
 
@@ -69,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {$kode_potensi      = 'POT-' . time()
     <?php require_once '../includes/sidebar.php'; ?>
 
     <div id="content">
-        <div class="card p-4 border-0 shadow-sm">
+        <div class="card card-modern p-4">
             <h4 class="mb-3 fw-bold">Tambah Potensi Investasi Baru</h4>
             <form method="POST" class="row g-3">
                 <div class="col-md-4">
@@ -118,17 +104,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {$kode_potensi      = 'POT-' . time()
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Sumber Data</label>
-                    <input type="text" name="sumber_data" class="form-control" value="Notulen Rapat Koordinasi 2026">
+                    <input type="text" name="sumber_data" class="form-control" >
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Tahun Data</label>
                     <input type="number" name="tahun_data" class="form-control" value="2026">
                 </div>
                 
-                <!-- Tombol Simpan & Reset -->
                 <div class="col-12 mt-4 d-flex gap-2">
-                    <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Simpan Data Potensi</button>
-                    <button type="reset" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise"></i> Reset Form</button>
+                    <button type="submit" class="btn btn-success"><i class="bi bi-save me-1"></i> Simpan Data Potensi</button>
+                    <button type="reset" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i> Reset Form</button>
                 </div>
             </form>
         </div>
@@ -153,54 +138,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {$kode_potensi      = 'POT-' . time()
                 kelSelect.innerHTML = html;
             });
     });
-    // Konfirmasi Form Tambah / Edit
-document.querySelectorAll('form').forEach(form => {
-    form.addEventListener('submit', function(e) {
-        e.preventDefault(); // Hentikan submit langsung
-        
-        const isEdit = form.querySelector('[name*="edit"]') !== null || window.location.href.includes('edit');
-        const titleText = isEdit ? 'Simpan Perubahan?' : 'Tambah Data Baru?';
-        const confirmText = isEdit ? 'Ya, Perbarui!' : 'Ya, Simpan!';
-
-        Swal.fire({
-            title: titleText,
-            text: "Pastikan data yang diinputkan sudah benar.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmColor: '#0d6efd',
-            cancelColor: '#6c757d',
-            confirmButtonText: confirmText,
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                form.submit(); // Jalankan submit form jika ditekan Ya
-            }
-        });
-    });
-});
-
-// Konfirmasi Tombol Hapus
-document.querySelectorAll('.btn-danger').forEach(button => {
-    button.addEventListener('click', function(e) {
-        e.preventDefault();
-        const targetUrl = this.getAttribute('href');
-
-        Swal.fire({
-            title: 'Apakah Anda Yakin?',
-            text: "Data yang dihapus tidak dapat dikembalikan!",
-            icon: 'error',
-            showCancelButton: true,
-            confirmColor: '#dc3545',
-            cancelColor: '#6c757d',
-            confirmButtonText: 'Ya, Hapus Data!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = targetUrl;
-            }
-        });
-    });
-});
 </script>
 </body>
 </html>
