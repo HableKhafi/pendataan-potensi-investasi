@@ -217,7 +217,9 @@ $sektor = $pdo->query("SELECT * FROM sektor ORDER BY id_sektor DESC")->fetchAll(
 <script>
     $(document).ready(function() {
         $('#tableSektor').DataTable();
-        $('.btn-edit').click(function() {
+
+        // Gunakan event delegation agar tombol di page 2, 3, dst. tetap berfungsi
+        $('#tableSektor').on('click', '.btn-edit', function() {
             $('#edit_id').val($(this).data('id'));
             $('#edit_kode').val($(this).data('kode'));
             $('#edit_nama').val($(this).data('nama'));

@@ -206,7 +206,9 @@ $users = $pdo->query("SELECT id_user, nama, email, role, status, created_at FROM
 <script>
     $(document).ready(function() {
         $('#tableUsers').DataTable();
-        $('.btn-edit-user').click(function() {
+
+        // Gunakan event delegation agar tombol di page 2, 3, dst. tetap berfungsi
+        $('#tableUsers').on('click', '.btn-edit-user', function() {
             $('#edit_user_id').val($(this).data('id'));
             $('#edit_user_nama').val($(this).data('nama'));
             $('#edit_user_email').val($(this).data('email'));
