@@ -104,7 +104,9 @@ $sektor = $pdo->query("SELECT * FROM sektor ORDER BY id_sektor DESC")->fetchAll(
     <?php require_once '../includes/sidebar.php'; ?>
 
     <div id="content">
-        <h4 class="mb-4 fw-bold">Data Sektor Investasi</h4>
+       <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
+         <h4 class="m-0 fw-bold">Data Sektor Investasi</h4>
+       </div>
 
         <?php if (!empty($error)): ?>
             <div class="alert alert-danger alert-dismissible fade show"><i class="bi bi-exclamation-triangle-fill me-2"></i><?= htmlspecialchars($error) ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>

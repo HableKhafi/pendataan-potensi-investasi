@@ -59,7 +59,7 @@ $can_edit_data    = in_array($user_role, ['admin', 'pegawai']);
 <nav id="sidebar">
     <div class="sidebar-header text-center">
         <h5 class="m-0 fw-bold text-white">DPMPTSP</h5>
-        <small class="text-white-50">Potensi Investasi</small>
+        <small class="text-white-50">Pendataan Potensi Investasi</small>
     </div>
 
     <ul class="list-unstyled components">
@@ -79,15 +79,15 @@ $can_edit_data    = in_array($user_role, ['admin', 'pegawai']);
 
 
 
-        <li class="<?= $current_page === 'laporan.php' ? 'active' : '' ?>">
-            <a href="laporan.php"><i class="bi bi-bar-chart-line"></i> Laporan & Grafik</a>
-        </li>
-
+        
         <?php if ($can_manage_users): ?>
-        <li class="<?= $current_page === 'users.php' ? 'active' : '' ?>">
-            <a href="users.php"><i class="bi bi-people"></i> Kelola User</a>
-        </li>
-        <?php endif; ?>
+            <li class="<?= $current_page === 'users.php' ? 'active' : '' ?>">
+                <a href="users.php"><i class="bi bi-people"></i> Kelola User</a>
+            </li>
+            <?php endif; ?>
+            <li class="<?= $current_page === 'laporan.php' ? 'active' : '' ?>">
+                <a href="laporan.php"><i class="bi bi-bar-chart-line"></i> Laporan & Grafik</a>
+            </li>
 
         <li class="mt-4 border-top border-secondary pt-3">
             <a href="../auth/logout.php" class="text-danger"><i class="bi bi-box-arrow-right"></i> Logout</a>
