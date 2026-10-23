@@ -3,6 +3,7 @@ session_start();
 require_once '../config/database.php';
 require_once '../includes/auth.php';
 
+/** @var bool $can_edit_data */
 /** @var PDO $pdo */
 $sql = "SELECT p.*, s.nama_sektor, k.nama_kecamatan, l.nama_kelurahan 
         FROM potensi_investasi p

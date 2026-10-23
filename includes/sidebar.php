@@ -12,13 +12,29 @@ $can_edit_data    = in_array($user_role, ['admin', 'pegawai']);
 
 <style>
     body { min-height: 100vh; background-color: #f8f9fa; }
-    .wrapper { display: flex; width: 100%; align-items: stretch; }
-    #sidebar { min-width: 250px; max-width: 250px; background: #212529; color: #fff; min-height: 100vh; }
+    
+    /* Ubah align-items menjadi flex-start agar sticky bekerja optimal */
+    .wrapper { display: flex; width: 100%; align-items: flex-start; }
+    
+    /* Konfigurasi Sidebar Sticky */
+    #sidebar { 
+        min-width: 250px; 
+        max-width: 250px; 
+        background: #212529; 
+        color: #fff; 
+        height: 100vh;        /* Kunci tinggi sidebar tepat setinggi layar */
+        position: sticky;     /* Buat posisi sidebar menempel */
+        top: 0;               /* Posisi selalu di paling atas viewport */
+        overflow-y: auto;     /* Tambahkan scroll internal jika menu sidebar melebihi layar */
+        z-index: 100;
+    }
+    
     #sidebar .sidebar-header { padding: 20px; background: #1a1d20; border-bottom: 1px solid #2c3034; }
     #sidebar ul.components { padding: 15px 0; }
     #sidebar ul li a { padding: 12px 20px; font-size: 0.95rem; display: block; color: #adb5bd; text-decoration: none; transition: 0.2s; }
     #sidebar ul li a:hover, #sidebar ul li.active > a { color: #fff; background: #0d6efd; }
     #sidebar ul li a i { margin-right: 10px; }
+    
     #content { width: 100%; padding: 25px; min-height: 100vh; }
 
     /* Card & Table Modern UI */
@@ -83,8 +99,11 @@ $can_edit_data    = in_array($user_role, ['admin', 'pegawai']);
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Handling Form Submit (Tambah & Edit)
+  // Handling Form Submit (Tambah & Edit saja, abaikan form Filter/GET)
     document.querySelectorAll('form').forEach(form => {
+        // Abaikan form jika menggunakan method GET atau memiliki class 'no-alert'
+        if (form.method.toLowerCase() === 'get' || form.classList.contains('no-alert')) return;
+
         form.addEventListener('submit', function(e) {
             if (this.dataset.confirmed === 'true') return true;
 
@@ -120,7 +139,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
-
     // Handling Delete Buttons
     document.querySelectorAll('a.btn-outline-danger, a.btn-danger').forEach(button => {
         button.addEventListener('click', function(e) {
