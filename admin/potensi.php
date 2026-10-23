@@ -28,7 +28,9 @@ $potensi_list = $pdo->query($sql)->fetchAll();
     <div id="content">
         <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
             <h4 class="m-0 fw-bold">Daftar Potensi Investasi</h4>
-            <a href="potensi_tambah.php" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Tambah Data Baru</a>
+            <?php if ($can_edit_data): ?>
+                <a href="potensi_tambah.php" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Tambah Data Baru</a>
+            <?php endif; ?>
         </div>
 
         <?php if (isset($_GET['msg']) && $_GET['msg'] === 'updated'): ?>
@@ -49,7 +51,9 @@ $potensi_list = $pdo->query($sql)->fetchAll();
                             <th>Deskripsi Potensi</th>
                             <th>Peluang Investasi</th>
                             <th>Tahun</th>
-                            <th class="text-center" width="10%">Aksi</th>
+                            <?php if ($can_edit_data): ?>
+                                <th class="text-center" width="10%">Aksi</th>
+                            <?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
@@ -67,6 +71,7 @@ $potensi_list = $pdo->query($sql)->fetchAll();
                             <td><?= nl2br(htmlspecialchars($p['deskripsi'])) ?></td>
                             <td><?= nl2br(htmlspecialchars($p['peluang_investasi'] ?? '-')) ?></td>
                             <td><span class="badge badge-soft-info px-2 py-1"><?= htmlspecialchars($p['tahun_data'] ?? '-') ?></span></td>
+                            <?php if ($can_edit_data): ?>
                             <td class="text-center">
                                 <div class="d-flex gap-1 justify-content-center">
                                     <a href="potensi_edit.php?id=<?= $p['id_potensi'] ?>" class="btn btn-sm btn-outline-warning btn-action" title="Edit">
@@ -77,6 +82,7 @@ $potensi_list = $pdo->query($sql)->fetchAll();
                                     </a>
                                 </div>
                             </td>
+                            <?php endif; ?>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>

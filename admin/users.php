@@ -5,54 +5,86 @@ require_once '../includes/auth.php';
 
 /** @var PDO $pdo */
 $user_role = $_SESSION['role'] ?? '';
-$is_superadmin = in_array($user_role, ['superadmin', 'super_admin']);
 
-if (!$is_superadmin) {
+// Proteksi halaman: Hanya role 'admin' yang bisa mengelola akun pengguna
+if ($user_role !== 'admin') {
     header('Location: dashboard.php?error=unauthorized');
     exit;
 }
 
-// Tambah User
+$error = '';
+
+// 1. Tambah User Baru
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah_user'])) {
     $nama     = trim($_POST['nama'] ?? '');
     $email    = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
-    $role     = trim($_POST['role'] ?? 'admin');
+    $role     = trim($_POST['role'] ?? 'pegawai');
 
-    $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-    $insert = $pdo->prepare("INSERT INTO users (nama, email, password, role, status) VALUES (:nama, :email, :password, :role, 'aktif')");
-    $insert->execute([':nama' => $nama, ':email' => $email, ':password' => $hashedPassword, ':role' => $role]);
-    header("Location: users.php?msg=added");
-    exit;
+    if (empty($nama) || empty($email) || empty($password)) {
+        $error = "Semua bidang wajib diisi!";
+    } else {
+        $stmt_check = $pdo->prepare("SELECT id_user FROM users WHERE email = :email LIMIT 1");
+        $stmt_check->execute([':email' => $email]);
+
+        if ($stmt_check->fetch()) {
+            $error = "Email '$email' sudah terdaftar!";
+        } else {
+            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+            $insert = $pdo->prepare("INSERT INTO users (nama, email, password, role, status) VALUES (:nama, :email, :password, :role, 'aktif')");
+            $insert->execute([':nama' => $nama, ':email' => $email, ':password' => $hashedPassword, ':role' => $role]);
+            header("Location: users.php?msg=added");
+            exit;
+        }
+    }
 }
 
-// Edit User
+// 2. Edit User
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
     $id_user  = (int)$_POST['id_user'];
     $nama     = trim($_POST['nama'] ?? '');
     $email    = trim($_POST['email'] ?? '');
-    $role     = trim($_POST['role'] ?? 'admin');
+    $role     = trim($_POST['role'] ?? 'pegawai');
     $password = trim($_POST['password'] ?? '');
 
-    if (!empty($password)) {
-        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-        $stmt = $pdo->prepare("UPDATE users SET nama = :nama, email = :email, role = :role, password = :pass WHERE id_user = :id");
-        $stmt->execute([':nama' => $nama, ':email' => $email, ':role' => $role, ':pass' => $hashedPassword, ':id' => $id_user]);
+    $stmt_check = $pdo->prepare("SELECT id_user FROM users WHERE email = :email AND id_user != :id LIMIT 1");
+    $stmt_check->execute([':email' => $email, ':id' => $id_user]);
+
+    if ($stmt_check->fetch()) {
+        $error = "Email '$email' sudah digunakan oleh akun lain!";
     } else {
-        $stmt = $pdo->prepare("UPDATE users SET nama = :nama, email = :email, role = :role WHERE id_user = :id");
-        $stmt->execute([':nama' => $nama, ':email' => $email, ':role' => $role, ':id' => $id_user]);
+        if (!empty($password)) {
+            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+            $stmt = $pdo->prepare("UPDATE users SET nama = :nama, email = :email, role = :role, password = :pass WHERE id_user = :id");
+            $stmt->execute([':nama' => $nama, ':email' => $email, ':role' => $role, ':pass' => $hashedPassword, ':id' => $id_user]);
+        } else {
+            $stmt = $pdo->prepare("UPDATE users SET nama = :nama, email = :email, role = :role WHERE id_user = :id");
+            $stmt->execute([':nama' => $nama, ':email' => $email, ':role' => $role, ':id' => $id_user]);
+        }
+        header("Location: users.php?msg=updated");
+        exit;
     }
-    header("Location: users.php?msg=updated");
-    exit;
 }
 
-// Hapus User
+// 3. Hapus User (Hard Delete)
 if (isset($_GET['action']) && $_GET['action'] === 'delete') {
     $id_user = (int)$_GET['id'];
-    $stmt = $pdo->prepare("DELETE FROM users WHERE id_user = :id");
-    $stmt->execute([':id' => $id_user]);
-    header("Location: users.php?msg=deleted");
-    exit;
+
+    // Mencegah admin menghapus akunnya sendiri yang sedang dipakai
+    if ($id_user === (int)$_SESSION['id_user']) {
+        header("Location: users.php?msg=self_delete");
+        exit;
+    }
+
+    try {
+        $stmt = $pdo->prepare("DELETE FROM users WHERE id_user = :id");
+        $stmt->execute([':id' => $id_user]);
+        header("Location: users.php?msg=deleted");
+        exit;
+    } catch (PDOException $e) {
+        header("Location: users.php?msg=error");
+        exit;
+    }
 }
 
 $users = $pdo->query("SELECT id_user, nama, email, role, status, created_at FROM users ORDER BY id_user DESC")->fetchAll();
@@ -72,12 +104,18 @@ $users = $pdo->query("SELECT id_user, nama, email, role, status, created_at FROM
     <div id="content">
         <h4 class="mb-4 fw-bold">Kelola Akun Pengguna</h4>
         
+        <?php if (!empty($error)): ?>
+            <div class="alert alert-danger alert-dismissible fade show"><i class="bi bi-exclamation-triangle-fill me-2"></i><?= htmlspecialchars($error) ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        <?php endif; ?>
+
         <?php if (isset($_GET['msg']) && $_GET['msg'] === 'added'): ?>
             <div class="alert alert-success alert-dismissible fade show">Akun pengguna baru berhasil ditambahkan!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
         <?php elseif (isset($_GET['msg']) && $_GET['msg'] === 'updated'): ?>
             <div class="alert alert-success alert-dismissible fade show">Data akun berhasil diperbarui!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
         <?php elseif (isset($_GET['msg']) && $_GET['msg'] === 'deleted'): ?>
             <div class="alert alert-success alert-dismissible fade show">Akun pengguna berhasil dihapus!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        <?php elseif (isset($_GET['msg']) && $_GET['msg'] === 'self_delete'): ?>
+            <div class="alert alert-warning alert-dismissible fade show"><i class="bi bi-exclamation-circle-fill me-2"></i>Anda tidak dapat menghapus akun Anda sendiri yang sedang aktif digunakan!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
         <?php endif; ?>
 
         <div class="row">
@@ -86,25 +124,27 @@ $users = $pdo->query("SELECT id_user, nama, email, role, status, created_at FROM
                     <h5 class="fw-bold mb-3">Tambah Akun Baru</h5>
                     <form method="POST">
                         <div class="mb-3">
-                            <label class="form-label">Nama Lengkap</label>
+                            <label class="form-label">Nama Lengkap *</label>
                             <input type="text" name="nama" class="form-control" required placeholder="Nama Pegawai">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Email</label>
+                            <label class="form-label">Email *</label>
                             <input type="email" name="email" class="form-control" required placeholder="pegawai@dpmptsp.go.id">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Password</label>
+                            <label class="form-label">Password *</label>
                             <input type="password" name="password" class="form-control" required placeholder="Password">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Role</label>
+                            <label class="form-label">Role Pengguna *</label>
                             <select name="role" class="form-select" required>
-                                <option value="admin">Admin (Pegawai)</option>
-                                <option value="super_admin">Superadmin</option>
+                                <option value="admin">Admin (Full Access & Kelola User)</option>
+                                <option value="pegawai" selected>Pegawai (Input & Edit Data)</option>
+                                <option value="kadis">Kepala Dinas (View Only)</option>
+                                <option value="kabid">Kepala Bidang (View Only)</option>
                             </select>
                         </div>
-                        <button type="submit" name="tambah_user" class="btn btn-dark w-100">Simpan Akun</button>
+                        <button type="submit" name="tambah_user" class="btn btn-primary w-100">Simpan Akun</button>
                     </form>
                 </div>
             </div>
@@ -130,10 +170,16 @@ $users = $pdo->query("SELECT id_user, nama, email, role, status, created_at FROM
                                     <td class="fw-bold text-dark"><?= htmlspecialchars($u['nama']) ?></td>
                                     <td class="text-muted"><?= htmlspecialchars($u['email']) ?></td>
                                     <td>
-                                        <?php if (in_array($u['role'], ['superadmin', 'super_admin'])): ?>
-                                            <span class="badge badge-soft-danger px-2 py-1"><i class="bi bi-shield-lock me-1"></i> Superadmin</span>
+                                        <?php if ($u['role'] === 'admin'): ?>
+                                            <span class="badge badge-soft-danger px-2 py-1"><i class="bi bi-shield-lock me-1"></i> Admin</span>
+                                        <?php elseif ($u['role'] === 'pegawai'): ?>
+                                            <span class="badge badge-soft-primary px-2 py-1"><i class="bi bi-person me-1"></i> Pegawai</span>
+                                        <?php elseif ($u['role'] === 'kadis'): ?>
+                                            <span class="badge badge-soft-info px-2 py-1"><i class="bi bi-eye me-1"></i> Kepala Dinas</span>
+                                        <?php elseif ($u['role'] === 'kabid'): ?>
+                                            <span class="badge badge-soft-secondary px-2 py-1"><i class="bi bi-eye me-1"></i> Kepala Bidang</span>
                                         <?php else: ?>
-                                            <span class="badge badge-soft-primary px-2 py-1"><i class="bi bi-person me-1"></i> Admin</span>
+                                            <span class="badge badge-soft-secondary px-2 py-1"><?= strtoupper($u['role']) ?></span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-center">
@@ -173,18 +219,20 @@ $users = $pdo->query("SELECT id_user, nama, email, role, status, created_at FROM
             <div class="modal-body">
                 <input type="hidden" name="id_user" id="edit_user_id">
                 <div class="mb-3">
-                    <label class="form-label">Nama Lengkap</label>
+                    <label class="form-label">Nama Lengkap *</label>
                     <input type="text" name="nama" id="edit_user_nama" class="form-control" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Email</label>
+                    <label class="form-label">Email *</label>
                     <input type="email" name="email" id="edit_user_email" class="form-control" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Role</label>
+                    <label class="form-label">Role Pengguna *</label>
                     <select name="role" id="edit_user_role" class="form-select" required>
-                        <option value="admin">Admin (Pegawai)</option>
-                        <option value="super_admin">Superadmin</option>
+                        <option value="admin">Admin (Full Access & Kelola User)</option>
+                        <option value="pegawai">Pegawai (Input & Edit Data)</option>
+                        <option value="kadis">Kepala Dinas (View Only)</option>
+                        <option value="kabid">Kepala Bidang (View Only)</option>
                     </select>
                 </div>
                 <div class="mb-3">
@@ -207,7 +255,7 @@ $users = $pdo->query("SELECT id_user, nama, email, role, status, created_at FROM
     $(document).ready(function() {
         $('#tableUsers').DataTable();
 
-        // Gunakan event delegation agar tombol di page 2, 3, dst. tetap berfungsi
+        // Event delegation agar tombol edit di page 2 DataTables tetap aktif
         $('#tableUsers').on('click', '.btn-edit-user', function() {
             $('#edit_user_id').val($(this).data('id'));
             $('#edit_user_nama').val($(this).data('nama'));

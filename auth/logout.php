@@ -3,6 +3,7 @@ session_start();
 session_unset();
 session_destroy();
 
-header('Location: ../login.php');
+// Redirect ke login.php di folder yang sama
+header("Location: login.php");
 exit;
 ?>

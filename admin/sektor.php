@@ -6,6 +6,14 @@ require_once '../includes/auth.php';
 /** @var PDO $pdo */
 $error = '';
 
+// Block akses POST/DELETE jika role tidak memiliki izin edit (kadis & kabid)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' || isset($_GET['action'])) {
+    if (!$can_edit_data) {
+        header("Location: sektor.php?msg=unauthorized");
+        exit;
+    }
+}
+
 // Tambah Sektor
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah_sektor'])) {
     $kode_sektor = trim($_POST['kode_sektor'] ?? '');
@@ -95,13 +103,15 @@ $sektor = $pdo->query("SELECT * FROM sektor ORDER BY id_sektor DESC")->fetchAll(
     <?php require_once '../includes/sidebar.php'; ?>
 
     <div id="content">
-        <h4 class="mb-4 fw-bold">Kelola Sektor Investasi</h4>
+        <h4 class="mb-4 fw-bold">Data Sektor Investasi</h4>
 
         <?php if (!empty($error)): ?>
             <div class="alert alert-danger alert-dismissible fade show"><i class="bi bi-exclamation-triangle-fill me-2"></i><?= htmlspecialchars($error) ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
         <?php endif; ?>
 
-        <?php if (isset($_GET['msg']) && $_GET['msg'] === 'used'): ?>
+        <?php if (isset($_GET['msg']) && $_GET['msg'] === 'unauthorized'): ?>
+            <div class="alert alert-danger alert-dismissible fade show"><i class="bi bi-shield-exclamation me-2"></i>Anda tidak memiliki hak akses untuk mengubah data sektor.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        <?php elseif (isset($_GET['msg']) && $_GET['msg'] === 'used'): ?>
             <div class="alert alert-warning alert-dismissible fade show"><i class="bi bi-exclamation-circle-fill me-2"></i>Sektor tidak dapat dihapus karena masih digunakan oleh data Potensi Investasi!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
         <?php elseif (isset($_GET['msg']) && $_GET['msg'] === 'added'): ?>
             <div class="alert alert-success alert-dismissible fade show">Sektor baru berhasil ditambahkan!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
@@ -112,6 +122,7 @@ $sektor = $pdo->query("SELECT * FROM sektor ORDER BY id_sektor DESC")->fetchAll(
         <?php endif; ?>
 
         <div class="row">
+            <?php if ($can_edit_data): ?>
             <div class="col-md-4">
                 <div class="card card-modern p-4">
                     <h5 class="fw-bold mb-3">Tambah Sektor Baru</h5>
@@ -132,8 +143,9 @@ $sektor = $pdo->query("SELECT * FROM sektor ORDER BY id_sektor DESC")->fetchAll(
                     </form>
                 </div>
             </div>
+            <?php endif; ?>
 
-            <div class="col-md-8">
+            <div class="<?= $can_edit_data ? 'col-md-8' : 'col-md-12' ?>">
                 <div class="card card-modern p-4">
                     <h5 class="fw-bold mb-3">Daftar Sektor</h5>
                     <div class="table-responsive">
@@ -144,7 +156,9 @@ $sektor = $pdo->query("SELECT * FROM sektor ORDER BY id_sektor DESC")->fetchAll(
                                     <th width="15%">Kode</th>
                                     <th>Nama Sektor</th>
                                     <th>Deskripsi</th>
-                                    <th class="text-center" width="15%">Aksi</th>
+                                    <?php if ($can_edit_data): ?>
+                                        <th class="text-center" width="15%">Aksi</th>
+                                    <?php endif; ?>
                                 </tr>
                             </thead>
                             <tbody>
@@ -154,6 +168,7 @@ $sektor = $pdo->query("SELECT * FROM sektor ORDER BY id_sektor DESC")->fetchAll(
                                     <td><span class="badge badge-soft-primary px-2 py-1"><?= htmlspecialchars($s['kode_sektor']) ?></span></td>
                                     <td class="fw-bold text-dark"><?= htmlspecialchars($s['nama_sektor']) ?></td>
                                     <td class="text-muted"><?= htmlspecialchars($s['deskripsi'] ?? '-') ?></td>
+                                    <?php if ($can_edit_data): ?>
                                     <td class="text-center">
                                         <div class="d-flex gap-1 justify-content-center">
                                             <button class="btn btn-sm btn-outline-warning btn-action btn-edit" 
@@ -169,6 +184,7 @@ $sektor = $pdo->query("SELECT * FROM sektor ORDER BY id_sektor DESC")->fetchAll(
                                             </a>
                                         </div>
                                     </td>
+                                    <?php endif; ?>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -180,6 +196,7 @@ $sektor = $pdo->query("SELECT * FROM sektor ORDER BY id_sektor DESC")->fetchAll(
     </div>
 </div>
 
+<?php if ($can_edit_data): ?>
 <!-- Modal Edit Sektor -->
 <div class="modal fade" id="modalEditSektor" tabindex="-1">
     <div class="modal-dialog">
@@ -209,6 +226,7 @@ $sektor = $pdo->query("SELECT * FROM sektor ORDER BY id_sektor DESC")->fetchAll(
         </form>
     </div>
 </div>
+<?php endif; ?>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -217,8 +235,6 @@ $sektor = $pdo->query("SELECT * FROM sektor ORDER BY id_sektor DESC")->fetchAll(
 <script>
     $(document).ready(function() {
         $('#tableSektor').DataTable();
-
-        // Gunakan event delegation agar tombol di page 2, 3, dst. tetap berfungsi
         $('#tableSektor').on('click', '.btn-edit', function() {
             $('#edit_id').val($(this).data('id'));
             $('#edit_kode').val($(this).data('kode'));

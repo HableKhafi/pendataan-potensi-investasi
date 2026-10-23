@@ -1,7 +1,8 @@
 <?php
-$current_page  = basename($_SERVER['PHP_SELF']);
-$user_role     = $_SESSION['role'] ?? '';
-$is_superadmin = in_array($user_role, ['superadmin', 'super_admin']);
+$current_page     = basename($_SERVER['PHP_SELF']);
+$user_role        = $_SESSION['role'] ?? '';
+$can_manage_users = ($user_role === 'admin');
+$can_edit_data    = in_array($user_role, ['admin', 'pegawai']);
 ?>
 
 <!-- CSS Global & Modern Table Styling -->
@@ -50,19 +51,23 @@ $is_superadmin = in_array($user_role, ['superadmin', 'super_admin']);
             <a href="dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard</a>
         </li>
         <li class="<?= $current_page === 'sektor.php' ? 'active' : '' ?>">
-            <a href="sektor.php"><i class="bi bi-grid-3x3-gap"></i> Kelola Sektor</a>
+            <a href="sektor.php"><i class="bi bi-grid-3x3-gap"></i> Data Sektor</a>
+        </li>
+        <li class="<?= $current_page === 'wilayah.php' ? 'active' : '' ?>">
+            <a href="wilayah.php"><i class="bi bi-geo-alt"></i> Data Wilayah</a>
         </li>
         <li class="<?= in_array($current_page, ['potensi.php', 'potensi_edit.php']) ? 'active' : '' ?>">
             <a href="potensi.php"><i class="bi bi-file-earmark-text"></i> Data Potensi</a>
         </li>
-        <li class="<?= $current_page === 'potensi_tambah.php' ? 'active' : '' ?>">
-            <a href="potensi_tambah.php"><i class="bi bi-plus-circle"></i> Tambah Potensi</a>
-        </li>
+
+
+
+
         <li class="<?= $current_page === 'laporan.php' ? 'active' : '' ?>">
             <a href="laporan.php"><i class="bi bi-bar-chart-line"></i> Laporan & Grafik</a>
         </li>
-        
-        <?php if ($is_superadmin): ?>
+
+        <?php if ($can_manage_users): ?>
         <li class="<?= $current_page === 'users.php' ? 'active' : '' ?>">
             <a href="users.php"><i class="bi bi-people"></i> Kelola User</a>
         </li>

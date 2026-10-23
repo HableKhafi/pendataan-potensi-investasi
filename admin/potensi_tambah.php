@@ -56,7 +56,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {$kode_potensi      = 'POT-' . time()
 
     <div id="content">
         <div class="card card-modern p-4">
-            <h4 class="mb-3 fw-bold">Tambah Potensi Investasi Baru</h4>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-3 fw-bold">Tambah Potensi Investasi Baru</h4>
+            <a href="potensi.php" class="btn btn-secondary btn-sm">&larr; Batal</a>
+            </div>
             <form method="POST" class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">Sektor *</label>
