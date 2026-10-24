@@ -5,61 +5,178 @@ $can_manage_users = ($user_role === 'admin');
 $can_edit_data    = in_array($user_role, ['admin', 'pegawai']);
 ?>
 
-<!-- CSS Global & Modern Table Styling -->
+<!-- CSS Global & Compact UI Styling -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 
 <style>
-    body { min-height: 100vh; background-color: #f8f9fa; }
-    
-    /* Ubah align-items menjadi flex-start agar sticky bekerja optimal */
-    .wrapper { display: flex; width: 100%; align-items: flex-start; }
-    
-    /* Konfigurasi Sidebar Sticky */
-    #sidebar { 
-        min-width: 250px; 
-        max-width: 250px; 
-        background: #212529; 
-        color: #fff; 
-        height: 100vh;        /* Kunci tinggi sidebar tepat setinggi layar */
-        position: sticky;     /* Buat posisi sidebar menempel */
-        top: 0;               /* Posisi selalu di paling atas viewport */
-        overflow-y: auto;     /* Tambahkan scroll internal jika menu sidebar melebihi layar */
-        z-index: 100;
+    body { 
+        min-height: 100vh; 
+        background-color: #f8fafc; 
+        font-size: 0.85rem; 
     }
     
-    #sidebar .sidebar-header { padding: 20px; background: #1a1d20; border-bottom: 1px solid #2c3034; }
-    #sidebar ul.components { padding: 15px 0; }
-    #sidebar ul li a { padding: 12px 20px; font-size: 0.95rem; display: block; color: #adb5bd; text-decoration: none; transition: 0.2s; }
-    #sidebar ul li a:hover, #sidebar ul li.active > a { color: #fff; background: #0d6efd; }
-    #sidebar ul li a i { margin-right: 10px; }
+    .wrapper { display: flex; width: 100%; align-items: flex-start; }
+
+    /* Sidebar Clean White Theme */
+    #sidebar { 
+        min-width: 220px; 
+        max-width: 220px; 
+        background: #ffffff; 
+        color: #334155; 
+        height: 100vh; 
+        position: sticky; 
+        top: 0; 
+        overflow-y: auto; 
+        z-index: 100;
+        border-right: 1px solid #e2e8f0; /* Garis pembatas samping */
+    }
     
-    #content { width: 100%; padding: 25px; min-height: 100vh; }
+    #sidebar .sidebar-header { 
+        padding: 16px 12px; 
+        background: #ffffff; 
+        border-bottom: 1px solid #f1f5f9; 
+    }
 
-    /* Card & Table Modern UI */
-    .card-modern { border: none; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.03); background: #ffffff; }
-    .table-modern { border-collapse: separate; border-spacing: 0 6px; margin-top: -6px; }
-    .table-modern thead th { background-color: #f8f9fa !important; color: #6c757d; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; border: none; padding: 14px 16px; }
-    .table-modern tbody tr { background-color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: all 0.2s ease-in-out; }
-    .table-modern tbody tr:hover { background-color: #f1f5f9 !important; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-    .table-modern tbody td { border: none; padding: 14px 16px; color: #334155; font-size: 0.9rem; }
-    .table-modern tbody tr td:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
-    .table-modern tbody tr td:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+    #sidebar .sidebar-logo {
+        width: 46px;
+        height: auto;
+        object-fit: contain;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));
+    }
+    
+    #sidebar ul.components { padding: 12px 8px; }
+    #sidebar ul li { margin-bottom: 2px; }
+    
+    #sidebar ul li a { 
+        padding: 9px 12px; 
+        font-size: 0.85rem; 
+        display: block; 
+        color: #475569; 
+        text-decoration: none; 
+        transition: all 0.2s ease-in-out; 
+        font-weight: 500;
+        border-radius: 6px;
+    }
+    
+    /* Hover & Active State warna biru */
+    #sidebar ul li a:hover, #sidebar ul li.active > a { 
+        color: #ffffff !important; 
+        background-color: #2563eb; 
+    }
+    
+    #sidebar ul li a i { margin-right: 8px; font-size: 0.95rem; }
 
-    /* Badges & Buttons */
-    .badge-soft-primary { background-color: rgba(13, 110, 253, 0.1); color: #0d6efd; font-weight: 600; }
-    .badge-soft-success { background-color: rgba(25, 135, 84, 0.1); color: #198754; font-weight: 600; }
-    .badge-soft-danger  { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; font-weight: 600; }
-    .badge-soft-secondary { background-color: rgba(108, 117, 125, 0.1); color: #495057; font-weight: 600; }
-    .badge-soft-info    { background-color: rgba(13, 202, 240, 0.15); color: #087990; font-weight: 600; }
-    .btn-action { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; }
+    /* Area Konten Utama */
+    #content { 
+        width: 100%; 
+        padding: 16px 20px; 
+        min-height: 100vh; 
+    }
+
+    /* Card & Tabel Padat (Compact UI) */
+    .card-modern { 
+        border: none; 
+        border-radius: 10px; 
+        box-shadow: 0 2px 10px rgba(0,0,0,0.03); 
+        background: #ffffff; 
+    }
+    
+    .table-modern { 
+        border-collapse: separate; 
+        border-spacing: 0 3px; 
+        margin-top: -3px; 
+        font-size: 0.825rem; 
+    }
+    
+    .table-modern thead th { 
+        background-color: #f1f5f9 !important; 
+        color: #475569; 
+        font-size: 0.725rem; 
+        font-weight: 700; 
+        text-transform: uppercase; 
+        letter-spacing: 0.5px; 
+        border: none; 
+        padding: 8px 10px; 
+    }
+    
+    .table-modern tbody tr { 
+        background-color: #ffffff; 
+        box-shadow: 0 1px 2px rgba(0,0,0,0.02); 
+        transition: all 0.15s ease-in-out; 
+    }
+    
+    .table-modern tbody tr:hover { 
+        background-color: #f8fafc !important; 
+        transform: translateY(-1px); 
+    }
+    
+    .table-modern tbody td { 
+        border: none; 
+        padding: 8px 10px; 
+        color: #334155; 
+    }
+    
+    .table-modern tbody tr td:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+    .table-modern tbody tr td:last-child { border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
+
+    /* Form & Button Compact */
+    .form-control, .form-select { 
+        padding: 6px 10px; 
+        font-size: 0.825rem; 
+        border-radius: 6px; 
+    }
+    
+    .form-label { 
+        font-size: 0.8rem; 
+        margin-bottom: 4px; 
+        font-weight: 600;
+    }
+    
+    .btn-sm { 
+        padding: 4px 10px; 
+        font-size: 0.8rem; 
+    }
+
+    /* Badges & Action Buttons */
+    .badge-soft-primary { background-color: rgba(37, 99, 235, 0.1); color: #2563eb; font-weight: 600; font-size: 0.75rem; }
+    .badge-soft-success { background-color: rgba(22, 163, 74, 0.1); color: #16a34a; font-weight: 600; font-size: 0.75rem; }
+    .badge-soft-danger  { background-color: rgba(220, 38, 38, 0.1); color: #dc2626; font-weight: 600; font-size: 0.75rem; }
+    .badge-soft-secondary { background-color: rgba(100, 116, 139, 0.1); color: #475569; font-weight: 600; font-size: 0.75rem; }
+    .badge-soft-info    { background-color: rgba(14, 165, 233, 0.15); color: #0284c7; font-weight: 600; font-size: 0.75rem; }
+    
+    .btn-action { 
+        width: 28px; 
+        height: 28px; 
+        padding: 0; 
+        display: inline-flex; 
+        align-items: center; 
+        justify-content: center; 
+        border-radius: 6px; 
+        font-size: 0.8rem; 
+    }
+
+    /* Fix Dropdown Show Entries DataTables */
+    div.dataTables_length select {
+        width: auto !important;
+        display: inline-block !important;
+        padding-right: 2.2rem !important;
+        padding-left: 0.75rem !important;
+        min-width: 70px !important;
+        background-position: right 0.5rem center !important;
+    }
 </style>
 
 <nav id="sidebar">
     <div class="sidebar-header text-center">
-        <h5 class="m-0 fw-bold text-white">DPMPTSP</h5>
-        <small class="text-white-50">Pendataan Potensi Investasi</small>
+        <!-- Logo Kota Banjarbaru -->
+        <img src="../assets/img/Lambang_Kota_Banjarbaru.svg" 
+             alt="Logo Kota Banjarbaru" 
+             class="sidebar-logo mb-2" 
+             onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/f/f6/Lambang_Kota_Banjarbaru.svg';">
+        <h6 class="m-0 fw-bold text-dark" style="font-size: 0.825rem; letter-spacing: 0.5px;">DPMPTSP BANJARBARU</h6>
+        <small class="text-muted" style="font-size: 0.7rem;">Potensi Investasi</small>
     </div>
 
     <ul class="list-unstyled components">
@@ -75,21 +192,18 @@ $can_edit_data    = in_array($user_role, ['admin', 'pegawai']);
         <li class="<?= in_array($current_page, ['potensi.php', 'potensi_edit.php']) ? 'active' : '' ?>">
             <a href="potensi.php"><i class="bi bi-file-earmark-text"></i> Data Potensi</a>
         </li>
-
-
-
-
-        
         <?php if ($can_manage_users): ?>
-            <li class="<?= $current_page === 'users.php' ? 'active' : '' ?>">
-                <a href="users.php"><i class="bi bi-people"></i> Kelola User</a>
-            </li>
-            <?php endif; ?>
-            <li class="<?= $current_page === 'laporan.php' ? 'active' : '' ?>">
-                <a href="laporan.php"><i class="bi bi-bar-chart-line"></i> Laporan & Grafik</a>
-            </li>
+        <li class="<?= $current_page === 'users.php' ? 'active' : '' ?>">
+            <a href="users.php"><i class="bi bi-people"></i> Kelola User</a>
+        </li>
+        <?php endif; ?>
 
-        <li class="mt-4 border-top border-secondary pt-3">
+        <li class="<?= $current_page === 'laporan.php' ? 'active' : '' ?>">
+            <a href="laporan.php"><i class="bi bi-bar-chart-line"></i> Laporan & Grafik</a>
+        </li>
+
+
+        <li class="mt-4 border-top border-slate-200 pt-2">
             <a href="../auth/logout.php" class="text-danger"><i class="bi bi-box-arrow-right"></i> Logout</a>
         </li>
     </ul>
@@ -99,9 +213,8 @@ $can_edit_data    = in_array($user_role, ['admin', 'pegawai']);
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Handling Form Submit (Tambah & Edit saja, abaikan form Filter/GET)
+    // Handling Form Submit (Abaikan form dengan method GET/Filter)
     document.querySelectorAll('form').forEach(form => {
-        // Abaikan form jika menggunakan method GET atau memiliki class 'no-alert'
         if (form.method.toLowerCase() === 'get' || form.classList.contains('no-alert')) return;
 
         form.addEventListener('submit', function(e) {
@@ -120,8 +233,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 text: "Pastikan data yang diinputkan sudah benar.",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmColor: '#0d6efd',
-                cancelColor: '#6c757d',
+                confirmColor: '#2563eb',
+                cancelColor: '#64748b',
                 confirmButtonText: confirmText,
                 cancelButtonText: 'Batal'
             }).then((result) => {
@@ -139,6 +252,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
+
     // Handling Delete Buttons
     document.querySelectorAll('a.btn-outline-danger, a.btn-danger').forEach(button => {
         button.addEventListener('click', function(e) {
@@ -150,8 +264,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 text: "Data yang dihapus tidak dapat dikembalikan!",
                 icon: 'error',
                 showCancelButton: true,
-                confirmColor: '#dc3545',
-                cancelColor: '#6c757d',
+                confirmColor: '#dc2626',
+                cancelColor: '#64748b',
                 confirmButtonText: 'Ya, Hapus Data!',
                 cancelButtonText: 'Batal'
             }).then((result) => {
