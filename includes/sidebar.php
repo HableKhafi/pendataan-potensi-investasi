@@ -157,7 +157,6 @@ $can_edit_data    = in_array($user_role, ['admin', 'pegawai']);
         font-size: 0.8rem; 
     }
 
-    /* Fix Dropdown Show Entries DataTables */
     div.dataTables_length select {
         width: auto !important;
         display: inline-block !important;
@@ -170,7 +169,7 @@ $can_edit_data    = in_array($user_role, ['admin', 'pegawai']);
 
 <nav id="sidebar">
     <div class="sidebar-header text-center">
-        <!-- Logo Kota Banjarbaru -->
+        
         <img src="../assets/img/Lambang_Kota_Banjarbaru.svg" 
              alt="Logo Kota Banjarbaru" 
              class="sidebar-logo mb-2" 
