@@ -13,7 +13,7 @@ $user_role = $_SESSION['role'] ?? '';
 
 // Format Label Nama Role
 $role_label = [
-    'admin'   => 'Admin System',
+    'admin'   => 'Admin',
     'pegawai' => 'Pegawai',
     'kadis'   => 'Kepala Dinas',
     'kabid'   => 'Kepala Bidang'

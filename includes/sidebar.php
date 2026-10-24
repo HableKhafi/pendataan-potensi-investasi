@@ -176,7 +176,7 @@ $can_edit_data    = in_array($user_role, ['admin', 'pegawai']);
              class="sidebar-logo mb-2" 
              onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/f/f6/Lambang_Kota_Banjarbaru.svg';">
         <h6 class="m-0 fw-bold text-dark" style="font-size: 0.825rem; letter-spacing: 0.5px;">DPMPTSP BANJARBARU</h6>
-        <small class="text-muted" style="font-size: 0.7rem;">Potensi Investasi</small>
+        <small class="text-muted" style="font-size: 0.7rem;">Sistem Informasi Pendataan Potensi Investasi</small>
     </div>
 
     <ul class="list-unstyled components">
