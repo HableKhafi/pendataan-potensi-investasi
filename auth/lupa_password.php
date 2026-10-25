@@ -1,66 +1,59 @@
 <?php
 session_start();
-require_once '../config/database.php';
+date_default_timezone_set('Asia/Makassar');
 
-/** @var PDO $pdo */
-$error = '';
-$step  = 1;
-$email_verified = $_SESSION['reset_email'] ?? '';
+$host = 'localhost';
+$db   = 'db_potensi_investasi';
+$user = 'root';
+$pass = '';
 
-// Reset sesi permohonan lupa password
-if (isset($_GET['action']) && $_GET['action'] === 'reset') {
-    unset($_SESSION['reset_email'], $_SESSION['reset_nama']);
-    header("Location: lupa_password.php");
-    exit;
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass);
+} catch (PDOException $e) {
+    die("Koneksi gagal: " . $e->getMessage());
 }
 
-// Tahap 1: Verifikasi Email Pengguna
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verifikasi_email'])) {
-    $email = trim($_POST['email'] ?? '');
+$pesan = '';
 
-    if (empty($email)) {
-        $error = "Email wajib diisi!";
-    } else {
-        $stmt = $pdo->prepare("SELECT id_user, email, nama FROM users WHERE email = :email LIMIT 1");
-        $stmt->execute([':email' => $email]);
-        $user = $stmt->fetch();
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = trim($_POST['email']);
 
-        if ($user) {
-            $_SESSION['reset_email'] = $user['email'];
-            $_SESSION['reset_nama']  = $user['nama'];
-            $email_verified = $user['email'];
-            $step = 2;
+    $stmt = $pdo->prepare("SELECT id_user, nama FROM users WHERE email = ?");
+    $stmt->execute([$email]);
+    $userData = $stmt->fetch();
+
+    if ($userData) {
+        $otp = sprintf("%06d", mt_rand(1, 999999));
+
+        $update = $pdo->prepare("UPDATE users SET reset_otp = ?, otp_expiry = DATE_ADD(NOW(), INTERVAL 5 MINUTE) WHERE email = ?");
+        $update->execute([$otp, $email]);
+
+        $to      = $email;
+        $subject = "Kode OTP Reset Password - DPMPTSP";
+        $message = "
+        <html>
+        <body style='font-family: Arial, sans-serif;'>
+          <h3>Halo, {$userData['nama']}</h3>
+          <p>Kode OTP reset password Anda adalah: <b style='font-size: 22px; color: #2564ed;'>$otp</b></p>
+          <p>Kode ini berlaku selama <b>5 menit</b>.</p>
+        </body>
+        </html>
+        ";
+
+        $headers  = "MIME-Version: 1.0" . "\r\n";
+        $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+        $headers .= "From: DPMPTSP Banjarbaru <admin@dpmtsp.local>" . "\r\n";
+
+        if (mail($to, $subject, $message, $headers)) {
+            $_SESSION['reset_email'] = $email;
+            header("Location: reset_password.php");
+            exit;
         } else {
-            $error = "Email '$email' tidak terdaftar dalam sistem!";
+            $pesan = "Gagal mengirim email OTP. Pastikan server mail/Mailpit aktif.";
         }
-    }
-}
-
-// Tahap 2: Simpan Password Baru
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['simpan_password'])) {
-    $step = 2;
-    $password_baru = trim($_POST['password_baru'] ?? '');
-    $konfirmasi    = trim($_POST['konfirmasi_password'] ?? '');
-
-    if (empty($password_baru) || empty($konfirmasi)) {
-        $error = "Semua kolom password wajib diisi!";
-    } elseif ($password_baru !== $konfirmasi) {
-        $error = "Konfirmasi password tidak cocok!";
     } else {
-        $hashed = password_hash($password_baru, PASSWORD_BCRYPT);
-        $stmt   = $pdo->prepare("UPDATE users SET password = :pass WHERE email = :email");
-        $stmt->execute([':pass' => $hashed, ':email' => $email_verified]);
-
-        // Bersihkan session reset
-        unset($_SESSION['reset_email'], $_SESSION['reset_nama']);
-        
-        header("Location: login.php?msg=reset_success");
-        exit;
+        $pesan = "Email tidak terdaftar dalam sistem!";
     }
-}
-
-if (!empty($_SESSION['reset_email'])) {
-    $step = 2;
 }
 ?>
 
@@ -69,150 +62,273 @@ if (!empty($_SESSION['reset_email'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Password - DPMPTSP Kota Banjarbaru</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <title>Lupa Password - DPMPTSP Kota Banjarbaru</title>
+    <!-- FontAwesome Icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            background-color: #f1f5f9;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
             padding: 20px;
         }
-        .reset-card {
-            border: none;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
-            overflow: hidden;
+
+        .auth-card {
+            background: #ffffff;
             width: 100%;
             max-width: 900px;
-            background: #ffffff;
+            min-height: 520px;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+            display: flex;
+            overflow: hidden;
         }
-        .left-banner {
-            background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
+
+        /* Panel Kiri (Branding) */
+        .brand-panel {
+            flex: 1;
+            background: linear-gradient(180deg, #2564ed 0%, #1d52d8 100%);
+            padding: 40px;
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
-            padding: 40px 20px;
-            color: #ffffff;
+            align-items: center;
             text-align: center;
+            color: #ffffff;
         }
+
         .logo-box {
             background: #ffffff;
-            padding: 20px;
+            width: 130px;
+            height: 130px;
             border-radius: 24px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 160px;
-            height: 160px;
-            margin-bottom: 20px;
+            padding: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
         }
+
         .logo-box img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
         }
-        .form-control, .input-group-text {
-            border-color: #e2e8f0;
+
+        .brand-panel h3 {
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .brand-panel p {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.5;
+            max-width: 260px;
+        }
+
+        /* Panel Kanan (Form) */
+        .form-panel {
+            flex: 1.1;
+            padding: 50px 45px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .form-header {
+            margin-bottom: 24px;
+        }
+
+        .form-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
+
+        .form-header p {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        /* Alert Warning Konsisten */
+        .alert-warning {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
             padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        .form-control:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+
+        .alert-warning i {
+            font-size: 16px;
+            color: #dc2626;
         }
-        .btn-primary-custom {
-            background-color: #2563eb;
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
             font-weight: 600;
-            font-size: 1rem;
-            transition: all 0.2s ease-in-out;
+            color: #475569;
+            margin-bottom: 8px;
         }
-        .btn-primary-custom:hover {
-            background-color: #1d4ed8;
-            transform: translateY(-1px);
+
+        /* Input Group Presisi Seperti Login */
+        .input-group {
+            display: flex;
+            align-items: center;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #ffffff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-group:focus-within {
+            border-color: #2564ed;
+            box-shadow: 0 0 0 3px rgba(37, 100, 237, 0.12);
+        }
+
+        .input-group-icon {
+            padding: 12px 14px;
+            background: #f8fafc;
+            color: #94a3b8;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 46px;
+        }
+
+        .input-group input {
+            border: none;
+            outline: none;
+            padding: 12px 14px;
+            width: 100%;
+            font-size: 14px;
+            color: #1e293b;
+        }
+
+        .input-group input::placeholder {
+            color: #94a3b8;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 13px;
+            background-color: #2564ed;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 8px;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d52d8;
+        }
+
+        .form-footer {
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        .form-footer a {
+            color: #2564ed;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .auth-card {
+                flex-direction: column;
+            }
+            .brand-panel {
+                padding: 30px;
+            }
+            .form-panel {
+                padding: 30px 25px;
+            }
         }
     </style>
 </head>
 <body>
 
-<div class="card reset-card">
-    <div class="row g-0">
-        <!-- Kolom Kiri: Banner & Logo -->
-        <div class="col-md-6 left-banner">
+    <div class="auth-card">
+        <!-- Panel Kiri Branding -->
+        <div class="brand-panel">
             <div class="logo-box">
-                <img src="../assets/img/Lambang_Kota_Banjarbaru.svg" alt="Logo Kota Banjarbaru" onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/f/f6/Lambang_Kota_Banjarbaru.svg';">
+                <!-- Sesuaikan path logo jika berbeda -->
+                <img src="../assets/img/Lambang_Kota_Banjarbaru.svg" alt="Logo Banjarbaru" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Lambang_Kota_Banjarbaru.png/600px-Lambang_Kota_Banjarbaru.png'">
             </div>
-            <h5 class="fw-bold m-0 mt-2">DPMPTSP KOTA BANJARBARU</h5>
-            <small class="text-white-50">Sistem Informasi Potensi Investasi Daerah</small>
+            <h3>DPMPTSP KOTA BANJARBARU</h3>
+            <p>Sistem Informasi Pendataan Potensi Investasi Daerah</p>
         </div>
 
-        <!-- Kolom Kanan: Form Reset Password -->
-        <div class="col-md-6 p-4 p-md-5 bg-white d-flex flex-column justify-content-center">
-            <div class="mb-4">
-                <h3 class="fw-bold text-dark m-0">Reset Password</h3>
-                <p class="text-muted small">Pulihkan akses akun Anda</p>
+        <!-- Panel Kanan Form -->
+        <div class="form-panel">
+            <div class="form-header">
+                <h2>Lupa Password</h2>
+                <p>Masukkan Email terdaftar untuk menerima OTP</p>
             </div>
 
-            <?php if (!empty($error)): ?>
-                <div class="alert alert-danger alert-dismissible fade show py-2 small">
-                    <i class="bi bi-exclamation-triangle-fill me-1"></i><?= htmlspecialchars($error) ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <?php if ($pesan): ?>
+                <div class="alert-warning">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span><?= htmlspecialchars($pesan); ?></span>
                 </div>
             <?php endif; ?>
 
-            <?php if ($step === 1): ?>
-                <!-- FORM TAHAP 1: INPUT EMAIL -->
-                <p class="text-muted small mb-3">Masukkan email akun Anda yang terdaftar untuk verifikasi pemulihan password.</p>
-                <form method="POST">
-                    <div class="mb-4">
-                        <label class="form-label small fw-semibold text-secondary">Email Terdaftar</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white text-muted"><i class="bi bi-envelope"></i></span>
-                            <input type="email" name="email" class="form-control" required placeholder="Masukkan Email Anda">
+            <form method="POST">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <div class="input-group">
+                        <div class="input-group-icon">
+                            <i class="fa-regular fa-envelope"></i>
                         </div>
+                        <input type="email" id="email" name="email" placeholder="Masukkan Email Anda" required autocomplete="off">
                     </div>
-                    <button type="submit" name="verifikasi_email" class="btn btn-primary btn-primary-custom w-100 text-white mb-2">Verifikasi Email</button>
-                    <a href="login.php" class="btn btn-link w-100 text-decoration-none text-secondary small">&larr; Kembali ke Login</a>
-                </form>
-
-            <?php else: ?>
-                <!-- FORM TAHAP 2: INPUT PASSWORD BARU -->
-                <div class="alert alert-info py-2 small mb-3">
-                    <i class="bi bi-person-check-fill me-1"></i> Email terverifikasi untuk: <br>
-                    <strong><?= htmlspecialchars($_SESSION['reset_nama'] ?? '') ?></strong> (<?= htmlspecialchars($email_verified) ?>)
                 </div>
 
-                <form method="POST">
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold text-secondary">Password Baru</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white text-muted"><i class="bi bi-lock"></i></span>
-                            <input type="password" name="password_baru" class="form-control" required placeholder="Masukkan Password Baru">
-                        </div>
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label small fw-semibold text-secondary">Konfirmasi Password Baru</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white text-muted"><i class="bi bi-lock-fill"></i></span>
-                            <input type="password" name="konfirmasi_password" class="form-control" required placeholder="Ulangi Password Baru">
-                        </div>
-                    </div>
-                    <button type="submit" name="simpan_password" class="btn btn-success btn-primary-custom w-100 text-white mb-2" style="background-color: #198754;">Simpan Password Baru</button>
-                    <a href="lupa_password.php?action=reset" class="btn btn-link w-100 text-decoration-none text-secondary small">Ganti Email Verifikasi</a>
-                </form>
-            <?php endif; ?>
+                <button type="submit" class="btn-primary">Kirim Kode OTP</button>
+
+                <div class="form-footer">
+                    <a href="login.php">Kembali ke Login</a>
+                </div>
+            </form>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

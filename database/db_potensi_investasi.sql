@@ -16,39 +16,6 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `dokumentasi_potensi`
---
-
-DROP TABLE IF EXISTS `dokumentasi_potensi`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `dokumentasi_potensi` (
-  `id_dokumentasi` int unsigned NOT NULL AUTO_INCREMENT,
-  `id_potensi` int unsigned NOT NULL,
-  `nama_file` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `nama_file_asli` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `caption` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `is_cover` tinyint(1) NOT NULL DEFAULT '0',
-  `uploaded_by` int unsigned NOT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id_dokumentasi`),
-  KEY `fk_dokumentasi_user` (`uploaded_by`),
-  KEY `idx_dokumentasi_potensi` (`id_potensi`),
-  CONSTRAINT `fk_dokumentasi_potensi` FOREIGN KEY (`id_potensi`) REFERENCES `potensi_investasi` (`id_potensi`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_dokumentasi_user` FOREIGN KEY (`uploaded_by`) REFERENCES `users` (`id_user`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `dokumentasi_potensi`
---
-
-LOCK TABLES `dokumentasi_potensi` WRITE;
-/*!40000 ALTER TABLE `dokumentasi_potensi` DISABLE KEYS */;
-/*!40000 ALTER TABLE `dokumentasi_potensi` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `kecamatan`
 --
 
@@ -106,37 +73,6 @@ LOCK TABLES `kelurahan` WRITE;
 /*!40000 ALTER TABLE `kelurahan` DISABLE KEYS */;
 INSERT INTO `kelurahan` VALUES (1,1,'Guntung Paikat',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(2,1,'Kemuning',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(3,1,'Loktabat Selatan',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(4,1,'Sungai Besar',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(5,2,'Komet',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(6,2,'Loktabat Utara',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(7,2,'Mentaos',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(8,2,'Sungai Ulin',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(9,3,'Bangkal',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(10,3,'Cempaka',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(11,3,'Palam',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(12,3,'Sungai Tiung',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(13,4,'Guntung Manggis',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(14,4,'Guntung Payung',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(15,4,'Landasan Ulin Timur',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(16,4,'Syamsudin Noor',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(17,5,'Landasan Ulin Barat',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(18,5,'Landasan Ulin Selatan',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(19,5,'Landasan Ulin Tengah',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48'),(20,5,'Landasan Ulin Utara',NULL,1,'2026-10-08 02:03:48','2026-10-08 02:03:48');
 /*!40000 ALTER TABLE `kelurahan` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `log_aktivitas`
---
-
-DROP TABLE IF EXISTS `log_aktivitas`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `log_aktivitas` (
-  `id_log` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `id_user` int unsigned DEFAULT NULL,
-  `aktivitas` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `modul` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `id_referensi` int unsigned DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id_log`),
-  KEY `idx_log_user` (`id_user`),
-  KEY `idx_log_modul` (`modul`),
-  KEY `idx_log_created_at` (`created_at`),
-  CONSTRAINT `fk_log_user` FOREIGN KEY (`id_user`) REFERENCES `users` (`id_user`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `log_aktivitas`
---
-
-LOCK TABLES `log_aktivitas` WRITE;
-/*!40000 ALTER TABLE `log_aktivitas` DISABLE KEYS */;
-/*!40000 ALTER TABLE `log_aktivitas` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -206,7 +142,7 @@ CREATE TABLE `sektor` (
   PRIMARY KEY (`id_sektor`),
   UNIQUE KEY `kode_sektor` (`kode_sektor`),
   UNIQUE KEY `nama_sektor` (`nama_sektor`)
-) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -239,10 +175,12 @@ CREATE TABLE `users` (
   `last_login` datetime DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `reset_otp` varchar(6) DEFAULT NULL,
+  `otp_expiry` datetime DEFAULT NULL,
   PRIMARY KEY (`id_user`),
   UNIQUE KEY `email` (`email`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -251,7 +189,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (2,'Habel','Habel','habelkhafi@gmail.com','$2y$10$VFLly3jRG1q1SAK4if8TvenGwLxOsQUk8j2uVLHZ5E0d77kZdCGg.','admin','082255668778','Uniska (Magang)','aktif','2026-10-24 10:28:35','2026-10-12 12:23:57','2026-10-24 02:28:35'),(4,'putih suci','putih','putih@gmail.com','$2y$10$UAuzS8OqmynijhSfNyLKo.9jjz282rjMVKqledW76LyXe7/TfosFq','admin',NULL,NULL,'aktif','2026-10-23 21:07:26','2026-10-18 12:18:41','2026-10-23 13:07:26'),(5,'Kanafi, S.IP., M.M..','Kanafi','kanafi@gmail.com','$2y$10$yb8q8YlZyGP2tM/Q.Ck/nuHFDM4HVeEW2h/gdvci1gxXXOdEHGqtS','kadis',NULL,'Kepala Dinas','aktif','2026-10-23 21:00:54','2026-10-23 05:47:01','2026-10-23 13:02:34'),(6,'Iqbaliansyah','iqbal','Iqbal@gmail.com','$2y$10$osgHkNd4arKJSTaZQSzoeu9MIoPy0o0b.MPGWs4crrlbL5FafGcr2','kabid','081234567890',NULL,'aktif','2026-10-24 10:21:33','2026-10-23 05:56:15','2026-10-24 02:21:33'),(7,'Daffa','Keish','daffakeish@gmail.com','$2y$10$SPsQeC9hqYYVjmhwykkVFOd6ykGOvyPehp6qRb.8NVnydabhQdi4q','pegawai',NULL,'Umum dan Kepegawaian','aktif','2026-10-24 10:12:34','2026-10-24 02:12:21','2026-10-24 02:12:34');
+INSERT INTO `users` VALUES (2,'Habel','Habel','habielsky004@gmail.com','$2y$10$a4px8NYMMBE1iQ.q9PfgReusnmoAxMuD1RpSkjKdL762cYcc4NIDO','admin','082255668778','Uniska (Magang)','aktif','2026-10-25 17:59:47','2026-10-12 12:23:57','2026-10-25 09:59:47',NULL,NULL),(4,'putih suci','putih','putih@gmail.com','$2y$10$LhKzK5OyQwSc1wn44UBtoORKMbkTaiID5.iVrK/ZhRZ6GTlgOrzd6','admin',NULL,NULL,'aktif','2026-10-25 18:00:22','2026-10-18 12:18:41','2026-10-25 10:00:22',NULL,NULL),(5,'Kanafi, S.IP., M.M..','Kanafi','kanafi@gmail.com','$2y$10$yb8q8YlZyGP2tM/Q.Ck/nuHFDM4HVeEW2h/gdvci1gxXXOdEHGqtS','kadis',NULL,'Kepala Dinas','aktif','2026-10-23 21:00:54','2026-10-23 05:47:01','2026-10-23 13:02:34',NULL,NULL),(6,'Iqbaliansyah','iqbal','Iqbal@gmail.com','$2y$10$osgHkNd4arKJSTaZQSzoeu9MIoPy0o0b.MPGWs4crrlbL5FafGcr2','kabid','081234567890',NULL,'aktif','2026-10-24 10:21:33','2026-10-23 05:56:15','2026-10-24 02:21:33',NULL,NULL),(7,'Daffa','Keish','daffakeish@gmail.com','$2y$10$SPsQeC9hqYYVjmhwykkVFOd6ykGOvyPehp6qRb.8NVnydabhQdi4q','pegawai',NULL,'Umum dan Kepegawaian','aktif','2026-10-24 10:12:34','2026-10-24 02:12:21','2026-10-24 02:12:34',NULL,NULL),(8,'Kiki','kiki','kiki@gmail.com','$2y$10$caZ0/4qKErNWuEbJzUVTgOScv.lkzrhL8wSVeGFctFguY5v8Q9fk6','pegawai',NULL,'Umum dan Kepegawaian','aktif','2026-10-25 18:04:51','2026-10-25 10:01:51','2026-10-25 10:04:51',NULL,NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -264,4 +202,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-24 10:40:22
+-- Dump completed on 2026-10-25 18:06:30
