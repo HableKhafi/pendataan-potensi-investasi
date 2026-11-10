@@ -27,12 +27,19 @@ $potensi_list = $pdo->query($sql)->fetchAll();
     <?php require_once '../includes/sidebar.php'; ?>
 
     <div id="content">
-        <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
-            <h4 class="m-0 fw-bold">Daftar Potensi Investasi</h4>
-            <?php if ($can_edit_data): ?>
-                <a href="potensi_tambah.php" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Tambah Data Baru</a>
-            <?php endif; ?>
-        </div>
+
+<div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
+    <h4 class="m-0 fw-bold">Daftar Potensi Investasi</h4>
+    <div class="d-flex gap-2">
+        <!-- Tombol Cetak Seluruh Data Tabel -->
+        <a href="potensi_cetak.php" target="_blank" class="btn btn-outline-secondary">
+            <i class="bi bi-printer me-1"></i> Cetak Laporan Tabel
+        </a>
+        <?php if ($can_edit_data): ?>
+            <a href="potensi_tambah.php" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Tambah Data Baru</a>
+        <?php endif; ?>
+    </div>
+</div>
 
         <?php if (isset($_GET['msg']) && $_GET['msg'] === 'updated'): ?>
             <div class="alert alert-success alert-dismissible fade show">Data berhasil diperbarui!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>

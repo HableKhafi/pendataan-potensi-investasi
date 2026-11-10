@@ -11,6 +11,64 @@ $can_edit_data    = in_array($user_role, ['admin', 'pegawai']);
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 
 <style>
+
+/* 2. Aturan Cetak Global (@media print) */
+    @media print {
+        /* Sembunyikan sidebar, navbar, tombol, dan semua elemen kelas .no-print */
+        .sidebar,
+        .navbar,
+        .no-print,
+        .btn,
+        footer,
+        .breadcrumb {
+            display: none !important;
+        }
+
+        /* Reset tampilan body ke warna putih bersih */
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Hilangkan space/margin kiri bekas lokasi sidebar */
+        main, 
+        .content, 
+        .container, 
+        .container-fluid,
+        .col-md-9,
+        .col-lg-10 {
+            margin-left: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            flex: 0 0 100% !important;
+        }
+
+        /* Format card dan form agar terlihat resmi seperti dokumen */
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+        }
+
+        .card-header {
+            background-color: transparent !important;
+            border-bottom: 2px solid #000000 !important;
+            padding-left: 0 !important;
+        }
+
+        .form-control,
+        .form-select {
+            border: none !important;
+            border-bottom: 1px dashed #000000 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            color: #000000 !important;
+            padding-left: 0 !important;
+        }
+    }
     body { 
         min-height: 100vh; 
         background-color: #f8fafc; 
@@ -191,6 +249,12 @@ $can_edit_data    = in_array($user_role, ['admin', 'pegawai']);
         <li class="<?= in_array($current_page, ['potensi.php', 'potensi_edit.php']) ? 'active' : '' ?>">
             <a href="potensi.php"><i class="bi bi-file-earmark-text"></i> Data Potensi</a>
         </li>
+        <li class="<?= in_array($current_page, ['dokumen.php', 'dokumen_tambah.php', 'dokumen_edit.php']) ? 'active' : '' ?>">
+    <a href="dokumen.php"><i class="bi bi-file-earmark-pdf"></i> Data Dokumen</a>
+</li>
+<li class="<?= in_array($current_page, ['pegawai.php', 'pegawai_tambah.php', 'pegawai_edit.php']) ? 'active' : '' ?>">
+    <a href="pegawai.php"><i class="bi bi-people-fill"></i> Data Pegawai</a>
+</li>
         <?php if ($can_manage_users): ?>
         <li class="<?= $current_page === 'users.php' ? 'active' : '' ?>">
             <a href="users.php"><i class="bi bi-people"></i> Kelola User</a>
@@ -198,7 +262,7 @@ $can_edit_data    = in_array($user_role, ['admin', 'pegawai']);
         <?php endif; ?>
 
         <li class="<?= $current_page === 'laporan.php' ? 'active' : '' ?>">
-            <a href="laporan.php"><i class="bi bi-bar-chart-line"></i> Laporan & Grafik</a>
+            <a href="laporan.php"><i class="bi bi-bar-chart-line"></i> Rekapitulasi Laporan </a>
         </li>
 
 

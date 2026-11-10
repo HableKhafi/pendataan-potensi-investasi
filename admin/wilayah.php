@@ -16,32 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || isset($_GET['action'])) {
     }
 }
 
-// PROSES KECAMATAN
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah_kecamatan'])) {
-    $active_tab = 'kecamatan';
-    $nama_kecamatan = trim($_POST['nama_kecamatan'] ?? '');
-
-    if (empty($nama_kecamatan)) {
-        $error = "Nama kecamatan wajib diisi!";
-    } else {
-        $stmt_check = $pdo->prepare("SELECT id_kecamatan FROM kecamatan WHERE nama_kecamatan = :nama LIMIT 1");
-        $stmt_check->execute([':nama' => $nama_kecamatan]);
-
-        if ($stmt_check->fetch()) {
-            $error = "Kecamatan '$nama_kecamatan' sudah terdaftar!";
-        } else {
-            try {
-                $stmt = $pdo->prepare("INSERT INTO kecamatan (nama_kecamatan, status) VALUES (:nama, 1)");
-                $stmt->execute([':nama' => $nama_kecamatan]);
-                header("Location: wilayah.php?tab=kecamatan&msg=added");
-                exit;
-            } catch (PDOException $e) {
-                $error = "Gagal menyimpan data kecamatan.";
-            }
-        }
-    }
-}
-
+// PROSES EDIT KECAMATAN
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_kecamatan'])) {
     $active_tab = 'kecamatan';
     $id_kecamatan   = (int)$_POST['id_kecamatan'];
@@ -64,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_kecamatan'])) {
     }
 }
 
+// PROSES HAPUS KECAMATAN
 if (isset($_GET['action']) && $_GET['action'] === 'delete_kecamatan') {
     $active_tab = 'kecamatan';
     $id_kecamatan = (int)$_GET['id'];
@@ -90,33 +66,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete_kecamatan') {
     }
 }
 
-// PROSES KELURAHAN
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah_kelurahan'])) {
-    $active_tab = 'kelurahan';
-    $id_kecamatan   = (int)($_POST['id_kecamatan'] ?? 0);
-    $nama_kelurahan = trim($_POST['nama_kelurahan'] ?? '');
-
-    if ($id_kecamatan <= 0 || empty($nama_kelurahan)) {
-        $error = "Kecamatan dan nama kelurahan wajib diisi!";
-    } else {
-        $stmt_check = $pdo->prepare("SELECT id_kelurahan FROM kelurahan WHERE id_kecamatan = :id_kec AND nama_kelurahan = :nama LIMIT 1");
-        $stmt_check->execute([':id_kec' => $id_kecamatan, ':nama' => $nama_kelurahan]);
-
-        if ($stmt_check->fetch()) {
-            $error = "Kelurahan '$nama_kelurahan' sudah ada pada kecamatan tersebut!";
-        } else {
-            try {
-                $stmt = $pdo->prepare("INSERT INTO kelurahan (id_kecamatan, nama_kelurahan, status) VALUES (:id_kec, :nama, 1)");
-                $stmt->execute([':id_kec' => $id_kecamatan, ':nama' => $nama_kelurahan]);
-                header("Location: wilayah.php?tab=kelurahan&msg=added");
-                exit;
-            } catch (PDOException $e) {
-                $error = "Gagal menyimpan data kelurahan.";
-            }
-        }
-    }
-}
-
+// PROSES EDIT KELURAHAN
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_kelurahan'])) {
     $active_tab = 'kelurahan';
     $id_kelurahan   = (int)$_POST['id_kelurahan'];
@@ -140,6 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_kelurahan'])) {
     }
 }
 
+// PROSES HAPUS KELURAHAN
 if (isset($_GET['action']) && $_GET['action'] === 'delete_kelurahan') {
     $active_tab = 'kelurahan';
     $id_kelurahan = (int)$_GET['id'];
@@ -190,8 +141,14 @@ $kelurahan = $pdo->query("SELECT l.*, k.nama_kecamatan,
 
     <div id="content">
         <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
-            <h4 class="m-0 fw-bold">Data Wilayah Administrasi</h4>
-        </div>
+    <h4 class="m-0 fw-bold">Data Wilayah Administrasi</h4>
+    <div class="d-flex gap-2">
+        <!-- Tombol Cetak Rekapitulasi Wilayah -->
+        <a href="wilayah_cetak.php" target="_blank" class="btn btn-outline-secondary">
+            <i class="bi bi-printer me-1"></i> Cetak Laporan Wilayah
+        </a>
+    </div>
+</div>
 
         <?php if (!empty($error)): ?>
             <div class="alert alert-danger alert-dismissible fade show"><i class="bi bi-exclamation-triangle-fill me-2"></i><?= htmlspecialchars($error) ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
@@ -226,142 +183,109 @@ $kelurahan = $pdo->query("SELECT l.*, k.nama_kecamatan,
             
             <!-- TAB 1: KECAMATAN -->
             <div class="tab-pane fade <?= $active_tab === 'kecamatan' ? 'show active' : '' ?>" id="kecamatan-pane" role="tabpanel">
-                <div class="row">
-                    <?php if ($can_edit_data): ?>
-                    <div class="col-md-4">
-                        <div class="card card-modern p-4">
-                            <h5 class="fw-bold mb-3">Tambah Kecamatan</h5>
-                            <form method="POST">
-                                <div class="mb-3">
-                                    <label class="form-label">Nama Kecamatan *</label>
-                                    <input type="text" name="nama_kecamatan" class="form-control" required placeholder="Contoh: Banjarbaru Selatan">
-                                </div>
-                                <button type="submit" name="tambah_kecamatan" class="btn btn-primary w-100">Simpan Kecamatan</button>
-                            </form>
-                        </div>
+                <div class="card card-modern p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold m-0">Daftar Kecamatan</h5>
+                        <?php if ($can_edit_data): ?>
+                            <a href="kecamatan_tambah.php" class="btn btn-primary btn-sm">
+                                <i class="bi bi-plus-circle me-1"></i> Tambah Kecamatan Baru
+                            </a>
+                        <?php endif; ?>
                     </div>
-                    <?php endif; ?>
-
-                    <div class="<?= $can_edit_data ? 'col-md-8' : 'col-md-12' ?>">
-                        <div class="card card-modern p-4">
-                            <h5 class="fw-bold mb-3">Daftar Kecamatan</h5>
-                            <div class="table-responsive">
-                                <table id="tableKecamatan" class="table table-modern align-middle w-100">
-                                    <thead>
-                                        <tr>
-                                            <th width="8%">No</th>
-                                            <th>Nama Kecamatan</th>
-                                            <th>Total Kelurahan</th>
-                                            <th>Total Potensi</th>
-                                            <?php if ($can_edit_data): ?>
-                                                <th class="text-center" width="18%">Aksi</th>
-                                            <?php endif; ?>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php $no=1; foreach ($kecamatan as $k): ?>
-                                        <tr>
-                                            <td class="fw-semibold text-muted"><?= $no++ ?></td>
-                                            <td class="fw-bold text-dark"><?= htmlspecialchars($k['nama_kecamatan']) ?></td>
-                                            <td><span class="badge badge-soft-info px-2 py-1"><?= $k['total_kelurahan'] ?> Kelurahan</span></td>
-                                            <td><span class="badge badge-soft-success px-2 py-1"><?= $k['total_potensi'] ?> Potensi</span></td>
-                                            <?php if ($can_edit_data): ?>
-                                            <td class="text-center">
-                                                <div class="d-flex gap-1 justify-content-center">
-                                                    <button class="btn btn-sm btn-outline-warning btn-action btn-edit-kec" 
-                                                            data-id="<?= $k['id_kecamatan'] ?>" 
-                                                            data-nama="<?= htmlspecialchars($k['nama_kecamatan']) ?>" 
-                                                            data-bs-toggle="modal" data-bs-target="#modalEditKecamatan" title="Edit">
-                                                        <i class="bi bi-pencil-fill"></i>
-                                                    </button>
-                                                    <a href="wilayah.php?action=delete_kecamatan&id=<?= $k['id_kecamatan'] ?>" class="btn btn-sm btn-outline-danger btn-action" title="Hapus">
-                                                        <i class="bi bi-trash-fill"></i>
-                                                    </a>
-                                                </div>
-                                            </td>
-                                            <?php endif; ?>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                    <div class="table-responsive">
+                        <table id="tableKecamatan" class="table table-modern align-middle w-100">
+                            <thead>
+                                <tr>
+                                    <th width="8%">No</th>
+                                    <th>Nama Kecamatan</th>
+                                    <th>Total Kelurahan</th>
+                                    <th>Total Potensi</th>
+                                    <?php if ($can_edit_data): ?>
+                                        <th class="text-center" width="18%">Aksi</th>
+                                    <?php endif; ?>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $no=1; foreach ($kecamatan as $k): ?>
+                                <tr>
+                                    <td class="fw-semibold text-muted"><?= $no++ ?></td>
+                                    <td class="fw-bold text-dark"><?= htmlspecialchars($k['nama_kecamatan']) ?></td>
+                                    <td><span class="badge badge-soft-info px-2 py-1"><?= $k['total_kelurahan'] ?> Kelurahan</span></td>
+                                    <td><span class="badge badge-soft-success px-2 py-1"><?= $k['total_potensi'] ?> Potensi</span></td>
+                                    <?php if ($can_edit_data): ?>
+                                    <td class="text-center">
+                                        <div class="d-flex gap-1 justify-content-center">
+                                            <button class="btn btn-sm btn-outline-warning btn-action btn-edit-kec" 
+                                                    data-id="<?= $k['id_kecamatan'] ?>" 
+                                                    data-nama="<?= htmlspecialchars($k['nama_kecamatan']) ?>" 
+                                                    data-bs-toggle="modal" data-bs-target="#modalEditKecamatan" title="Edit">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </button>
+                                            <a href="wilayah.php?tab=kecamatan&action=delete_kecamatan&id=<?= $k['id_kecamatan'] ?>" class="btn btn-sm btn-outline-danger btn-action" title="Hapus">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                    <?php endif; ?>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
             <!-- TAB 2: KELURAHAN -->
             <div class="tab-pane fade <?= $active_tab === 'kelurahan' ? 'show active' : '' ?>" id="kelurahan-pane" role="tabpanel">
-                <div class="row">
-                    <?php if ($can_edit_data): ?>
-                    <div class="col-md-4">
-                        <div class="card card-modern p-4">
-                            <h5 class="fw-bold mb-3">Tambah Kelurahan</h5>
-                            <form method="POST">
-                                <div class="mb-3">
-                                    <label class="form-label">Kecamatan *</label>
-                                    <select name="id_kecamatan" class="form-select" required>
-                                        <option value="">-- Pilih Kecamatan --</option>
-                                        <?php foreach ($kecamatan_list as $k): ?>
-                                            <option value="<?= $k['id_kecamatan'] ?>"><?= htmlspecialchars($k['nama_kecamatan']) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Nama Kelurahan *</label>
-                                    <input type="text" name="nama_kelurahan" class="form-control" required placeholder="Contoh: Kemuning">
-                                </div>
-                                <button type="submit" name="tambah_kelurahan" class="btn btn-primary w-100">Simpan Kelurahan</button>
-                            </form>
-                        </div>
+                <div class="card card-modern p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold m-0">Daftar Kelurahan</h5>
+                        <?php if ($can_edit_data): ?>
+                            <a href="kelurahan_tambah.php" class="btn btn-primary btn-sm">
+                                <i class="bi bi-plus-circle me-1"></i> Tambah Kelurahan Baru
+                            </a>
+                        <?php endif; ?>
                     </div>
-                    <?php endif; ?>
-
-                    <div class="<?= $can_edit_data ? 'col-md-8' : 'col-md-12' ?>">
-                        <div class="card card-modern p-4">
-                            <h5 class="fw-bold mb-3">Daftar Kelurahan</h5>
-                            <div class="table-responsive">
-                                <table id="tableKelurahan" class="table table-modern align-middle w-100">
-                                    <thead>
-                                        <tr>
-                                            <th width="8%">No</th>
-                                            <th>Nama Kelurahan</th>
-                                            <th>Kecamatan</th>
-                                            <th>Total Potensi</th>
-                                            <?php if ($can_edit_data): ?>
-                                                <th class="text-center" width="18%">Aksi</th>
-                                            <?php endif; ?>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php $no=1; foreach ($kelurahan as $l): ?>
-                                        <tr>
-                                            <td class="fw-semibold text-muted"><?= $no++ ?></td>
-                                            <td class="fw-bold text-dark"><?= htmlspecialchars($l['nama_kelurahan']) ?></td>
-                                            <td><span class="badge badge-soft-primary px-2 py-1">Kec. <?= htmlspecialchars($l['nama_kecamatan']) ?></span></td>
-                                            <td><span class="badge badge-soft-success px-2 py-1"><?= $l['total_potensi'] ?> Potensi</span></td>
-                                            <?php if ($can_edit_data): ?>
-                                            <td class="text-center">
-                                                <div class="d-flex gap-1 justify-content-center">
-                                                    <button class="btn btn-sm btn-outline-warning btn-action btn-edit-kel" 
-                                                            data-id="<?= $l['id_kelurahan'] ?>" 
-                                                            data-idkec="<?= $l['id_kecamatan'] ?>" 
-                                                            data-nama="<?= htmlspecialchars($l['nama_kelurahan']) ?>" 
-                                                            data-bs-toggle="modal" data-bs-target="#modalEditKelurahan" title="Edit">
-                                                        <i class="bi bi-pencil-fill"></i>
-                                                    </button>
-                                                    <a href="wilayah.php?action=delete_kelurahan&id=<?= $l['id_kelurahan'] ?>" class="btn btn-sm btn-outline-danger btn-action" title="Hapus">
-                                                        <i class="bi bi-trash-fill"></i>
-                                                    </a>
-                                                </div>
-                                            </td>
-                                            <?php endif; ?>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                    <div class="table-responsive">
+                        <table id="tableKelurahan" class="table table-modern align-middle w-100">
+                            <thead>
+                                <tr>
+                                    <th width="8%">No</th>
+                                    <th>Nama Kelurahan</th>
+                                    <th>Kecamatan</th>
+                                    <th>Total Potensi</th>
+                                    <?php if ($can_edit_data): ?>
+                                        <th class="text-center" width="18%">Aksi</th>
+                                    <?php endif; ?>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $no=1; foreach ($kelurahan as $l): ?>
+                                <tr>
+                                    <td class="fw-semibold text-muted"><?= $no++ ?></td>
+                                    <td class="fw-bold text-dark"><?= htmlspecialchars($l['nama_kelurahan']) ?></td>
+                                    <td><span class="badge badge-soft-primary px-2 py-1">Kec. <?= htmlspecialchars($l['nama_kecamatan']) ?></span></td>
+                                    <td><span class="badge badge-soft-success px-2 py-1"><?= $l['total_potensi'] ?> Potensi</span></td>
+                                    <?php if ($can_edit_data): ?>
+                                    <td class="text-center">
+                                        <div class="d-flex gap-1 justify-content-center">
+                                            <button class="btn btn-sm btn-outline-warning btn-action btn-edit-kel" 
+                                                    data-id="<?= $l['id_kelurahan'] ?>" 
+                                                    data-idkec="<?= $l['id_kecamatan'] ?>" 
+                                                    data-nama="<?= htmlspecialchars($l['nama_kelurahan']) ?>" 
+                                                    data-bs-toggle="modal" data-bs-target="#modalEditKelurahan" title="Edit">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </button>
+                                            <a href="wilayah.php?tab=kelurahan&action=delete_kelurahan&id=<?= $l['id_kelurahan'] ?>" class="btn btn-sm btn-outline-danger btn-action" title="Hapus">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                    <?php endif; ?>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
