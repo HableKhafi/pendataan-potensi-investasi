@@ -82,7 +82,7 @@ $kecamatan_list = $pdo->query("SELECT * FROM kecamatan WHERE status = 1 ORDER BY
                 
                 <div class="col-12 mt-4 d-flex gap-2">
                     <button type="submit" class="btn btn-success"><i class="bi bi-save me-1"></i> Simpan Kelurahan</button>
-                    <a href="wilayah.php?tab=kelurahan" class="btn btn-secondary"><i class="bi bi-x-circle me-1"></i> Batal</a>
+                    <button type="reset" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i> Reset Form</button>
                 </div>
             </form>
         </div>

@@ -131,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 <div class="col-12 mt-4 d-flex gap-2">
                     <button type="submit" class="btn btn-warning"><i class="bi bi-save me-1"></i> Update Data Pegawai</button>
-                    <a href="pegawai.php" class="btn btn-secondary"><i class="bi bi-x-circle me-1"></i> Batal</a>
+                    <button type="reset" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i> Reset Form</button>
                 </div>
             </form>
         </div>
