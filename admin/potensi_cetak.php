@@ -6,11 +6,13 @@ require_once '../includes/auth.php';
 /** @var PDO $pdo */
 
 // Query mengambil SELURUH data tanpa limit / pagination DataTables
-$sql = "SELECT p.*, s.nama_sektor, k.nama_kecamatan, l.nama_kelurahan 
+$sql = "SELECT p.*, s.nama_sektor, k.nama_kecamatan, l.nama_kelurahan, pg.nama_pegawai 
         FROM potensi_investasi p
         JOIN sektor s ON p.id_sektor = s.id_sektor
         JOIN kecamatan k ON p.id_kecamatan = k.id_kecamatan
         LEFT JOIN kelurahan l ON p.id_kelurahan = l.id_kelurahan
+        LEFT JOIN pegawai pg ON p.id_pegawai = pg.id_pegawai
+        WHERE p.status_data = 'aktif'
         ORDER BY p.id_potensi DESC";
 
 $query = $pdo->query($sql);
@@ -42,7 +44,6 @@ $potensi_list = $query->fetchAll();
             text-align: center;
         }
 
-        /* Aturan agar tabel yang panjangnya multi-halaman tidak berantakan saat diprint */
         table {
             page-break-inside: auto;
         }
@@ -90,12 +91,13 @@ $potensi_list = $query->fetchAll();
             <thead>
                 <tr>
                     <th width="4%">No</th>
-                    <th width="12%">Kode</th>
-                    <th width="15%">Sektor</th>
-                    <th width="20%">Wilayah</th>
+                    <th width="11%">Kode</th>
+                    <th width="13%">Sektor</th>
+                    <th width="16%">Wilayah</th>
                     <th>Deskripsi Potensi</th>
                     <th>Peluang Investasi</th>
-                    <th width="8%">Tahun</th>
+                    <th width="15%">Pegawai Survei</th>
+                    <th width="6%">Tahun</th>
                 </tr>
             </thead>
             <tbody>
@@ -113,6 +115,7 @@ $potensi_list = $query->fetchAll();
                     </td>
                     <td><?= nl2br(htmlspecialchars($d['deskripsi'])); ?></td>
                     <td><?= nl2br(htmlspecialchars($d['peluang_investasi'] ?? '-')); ?></td>
+                    <td><?= htmlspecialchars($d['nama_pegawai'] ?? '-'); ?></td>
                     <td class="text-center"><?= htmlspecialchars($d['tahun_data'] ?? '-'); ?></td>
                 </tr>
                 <?php endforeach; ?>
@@ -124,10 +127,8 @@ $potensi_list = $query->fetchAll();
             <div class="col-8"></div>
             <div class="col-4 text-center">
                 <p>Banjarbaru, <?= date('d F Y'); ?></p>
-               
                 <br><br>
                 <p class="fw-bold text-decoration-underline mb-0">(...........................................)</p>
-        
             </div>
         </div>
     </div>

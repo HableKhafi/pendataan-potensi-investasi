@@ -3,76 +3,97 @@ session_start();
 require_once '../config/database.php';
 require_once '../includes/auth.php';
 
-/** @var PDO $pdo */$id_potensi = isset($_REQUEST['id']) ? (int)$_REQUEST['id'] : 0;
+/** @var bool $can_edit_data */
+/** @var PDO $pdo */
 
-$stmt =$pdo->prepare("SELECT * FROM potensi_investasi WHERE id_potensi = :id LIMIT 1");
-$stmt->execute([':id' =>$id_potensi]);
-$data =$stmt->fetch();
+if (!$can_edit_data) {
+    header("Location: potensi.php?msg=unauthorized");
+    exit;
+}
 
-if (!$data) {
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$stmt = $pdo->prepare("SELECT * FROM potensi_investasi WHERE id_potensi = :id LIMIT 1");
+$stmt->execute([':id' => $id]);
+$pot = $stmt->fetch();
+
+if (!$pot) {
     header("Location: potensi.php");
     exit;
 }
 
-$sektor    =$pdo->query("SELECT * FROM sektor WHERE status = 1")->fetchAll();
-$kecamatan =$pdo->query("SELECT * FROM kecamatan WHERE status = 1")->fetchAll();
-
-$stmt_kel  =$pdo->prepare("SELECT * FROM kelurahan WHERE id_kecamatan = :id_kec AND status = 1");
-$stmt_kel->execute([':id_kec' =>$data['id_kecamatan']]);
-$kelurahan =$stmt_kel->fetchAll();
-
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
-        $id_sektor         = (int)$_POST['id_sektor'];$id_kecamatan      = (int)$_POST['id_kecamatan'];$id_kelurahan      = !empty($_POST['id_kelurahan']) ? (int)$_POST['id_kelurahan'] : null;
-        $deskripsi         = trim($_POST['deskripsi']);
-        $kondisi_eksisting = trim($_POST['kondisi_eksisting']);
-        $peluang_investasi = trim($_POST['peluang_investasi']);
-        $kendala           = trim($_POST['kendala']);
-        $rekomendasi       = trim($_POST['rekomendasi']);
-        $sumber_data       = trim($_POST['sumber_data']);
-        $tahun_data        = (int)$_POST['tahun_data'];
+    $id_kecamatan      = (int)($_POST['id_kecamatan'] ?? 0);
+    $id_kelurahan      = !empty($_POST['id_kelurahan']) ? (int)$_POST['id_kelurahan'] : null;
+    $id_sektor         = (int)($_POST['id_sektor'] ?? 0);
+    $id_pegawai        = !empty($_POST['id_pegawai']) ? (int)$_POST['id_pegawai'] : null;
+    $deskripsi         = trim($_POST['deskripsi'] ?? '');
+    $kondisi_eksisting = trim($_POST['kondisi_eksisting'] ?? '');
+    $peluang_investasi = trim($_POST['peluang_investasi'] ?? '');
+    $kendala           = trim($_POST['kendala'] ?? '');
+    $rekomendasi       = trim($_POST['rekomendasi'] ?? '');
+    $sumber_data       = trim($_POST['sumber_data'] ?? '');
+    $tahun_data        = !empty($_POST['tahun_data']) ? (int)$_POST['tahun_data'] : null;
 
-        $sql = "UPDATE potensi_investasi SET 
-                id_sektor = :id_sektor,
-                id_kecamatan = :id_kecamatan,
-                id_kelurahan = :id_kelurahan,
-                deskripsi = :deskripsi,
-                kondisi_eksisting = :kondisi_eksisting,
-                peluang_investasi = :peluang_investasi,
-                kendala = :kendala,
-                rekomendasi = :rekomendasi,
-                sumber_data = :sumber_data,
-                tahun_data = :tahun_data
-                WHERE id_potensi = :id";
+    if ($id_kecamatan <= 0 || $id_sektor <= 0 || empty($deskripsi)) {
+        $error = "Kecamatan, Sektor Investasi, dan Deskripsi Potensi wajib diisi!";
+    } else {
+        try {
+            $sql = "UPDATE potensi_investasi SET 
+                        id_kecamatan = :id_kecamatan,
+                        id_kelurahan = :id_kelurahan,
+                        id_sektor = :id_sektor,
+                        id_pegawai = :id_pegawai,
+                        deskripsi = :deskripsi,
+                        kondisi_eksisting = :kondisi_eksisting,
+                        peluang_investasi = :peluang_investasi,
+                        kendala = :kendala,
+                        rekomendasi = :rekomendasi,
+                        sumber_data = :sumber_data,
+                        tahun_data = :tahun_data
+                    WHERE id_potensi = :id";
+            $stmt_update = $pdo->prepare($sql);
+            $stmt_update->execute([
+                ':id_kecamatan'      => $id_kecamatan,
+                ':id_kelurahan'      => $id_kelurahan,
+                ':id_sektor'         => $id_sektor,
+                ':id_pegawai'        => $id_pegawai,
+                ':deskripsi'         => $deskripsi,
+                ':kondisi_eksisting' => $kondisi_eksisting,
+                ':peluang_investasi' => $peluang_investasi,
+                ':kendala'           => $kendala,
+                ':rekomendasi'       => $rekomendasi,
+                ':sumber_data'       => $sumber_data,
+                ':tahun_data'        => $tahun_data,
+                ':id'                => $id
+            ]);
 
-        $update =$pdo->prepare($sql);$update->execute([
-            ':id_sektor'         => $id_sektor,
-            ':id_kecamatan'      => $id_kecamatan,
-            ':id_kelurahan'      => $id_kelurahan,
-            ':deskripsi'         => $deskripsi,
-            ':kondisi_eksisting' => $kondisi_eksisting,
-            ':peluang_investasi' => $peluang_investasi,
-            ':kendala'           => $kendala,
-            ':rekomendasi'       => $rekomendasi,
-            ':sumber_data'       => $sumber_data,
-            ':tahun_data'        => $tahun_data,
-            ':id'                => $id_potensi
-        ]);
-
-        header("Location: potensi.php?msg=updated");
-        exit;
-    } catch (PDOException $e) {$error = "Gagal memperbarui data: " . $e->getMessage();
+            header("Location: potensi.php?msg=updated");
+            exit;
+        } catch (PDOException $e) {
+            $error = "Gagal memperbarui data potensi investasi.";
+        }
     }
 }
+
+$sektor_list    = $pdo->query("SELECT * FROM sektor WHERE status = 1 ORDER BY nama_sektor ASC")->fetchAll();
+$kecamatan_list = $pdo->query("SELECT * FROM kecamatan WHERE status = 1 ORDER BY nama_kecamatan ASC")->fetchAll();
+$kelurahan_list = $pdo->query("SELECT * FROM kelurahan WHERE status = 1 ORDER BY nama_kelurahan ASC")->fetchAll();
+$pegawai_list   = $pdo->query("SELECT id_pegawai, nama_pegawai, status_pegawai, jabatan FROM pegawai WHERE status = 1 ORDER BY nama_pegawai ASC")->fetchAll();
+
+// Nilai aktif (prioritaskan input POST jika terjadi error validasi)
+$cur_sektor    = $_POST['id_sektor'] ?? $pot['id_sektor'];
+$cur_pegawai   = $_POST['id_pegawai'] ?? $pot['id_pegawai'];
+$cur_kecamatan = $_POST['id_kecamatan'] ?? $pot['id_kecamatan'];
+$cur_kelurahan = $_POST['id_kelurahan'] ?? $pot['id_kelurahan'];
 ?>
 
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Edit Potensi Investasi</title>
+    <title>Edit Potensi Investasi - DPMPTSP Banjarbaru</title>
 </head>
 <body>
 
@@ -80,108 +101,133 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php require_once '../includes/sidebar.php'; ?>
 
     <div id="content">
+        <?php if (!empty($error)): ?>
+            <div class="alert alert-danger alert-dismissible fade show mb-4"><i class="bi bi-exclamation-triangle-fill me-2"></i><?= htmlspecialchars($error) ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        <?php endif; ?>
+
         <div class="card card-modern p-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="fw-bold m-0">Edit Potensi Investasi (<?= htmlspecialchars($data['kode_potensi']) ?>)</h4>
-                <a href="potensi.php" class="btn btn-secondary btn-sm">&larr; Batal</a>
+                <div>
+                    <h4 class="mb-0 fw-bold">Edit Potensi Investasi</h4>
+                    <small class="text-muted">Kode Potensi: <strong><?= htmlspecialchars($pot['kode_potensi']) ?></strong></small>
+                </div>
+                <a href="potensi.php" class="btn btn-secondary btn-sm">← Batal</a>
             </div>
 
-            <?php if (!empty($error)): ?>
-                <div class="alert alert-danger py-2"><?= htmlspecialchars($error) ?></div>
-            <?php endif; ?>
-            
-            <form method="POST" action="potensi_edit.php?id=<?= $id_potensi ?>" class="row g-3">
-                <input type="hidden" name="id" value="<?= $id_potensi ?>">
-
-                <div class="col-md-4">
-                    <label class="form-label">Sektor *</label>
+            <form method="POST" class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Sektor Investasi *</label>
                     <select name="id_sektor" class="form-select" required>
-                        <?php foreach ($sektor as$s): ?>
-                            <option value="<?= $s['id_sektor'] ?>" <?= $s['id_sektor'] == $data['id_sektor'] ? 'selected' : '' ?>><?= htmlspecialchars($s['nama_sektor']) ?></option>
+                        <option value="">-- Pilih Sektor --</option>
+                        <?php foreach ($sektor_list as $s): ?>
+                            <option value="<?= $s['id_sektor'] ?>" <?= ($cur_sektor == $s['id_sektor']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($s['kode_sektor'] . ' - ' . $s['nama_sektor']) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-6">
+                    <label class="form-label">Pegawai yang Melakukan Survei</label>
+                    <select name="id_pegawai" class="form-select">
+                        <option value="">-- Pilih Pegawai Survei --</option>
+                        <?php foreach ($pegawai_list as $pg): ?>
+                            <option value="<?= $pg['id_pegawai'] ?>" <?= ($cur_pegawai == $pg['id_pegawai']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($pg['nama_pegawai']) ?> (<?= htmlspecialchars($pg['status_pegawai']) ?><?= !empty($pg['jabatan']) ? ' - ' . htmlspecialchars($pg['jabatan']) : '' ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
                     <label class="form-label">Kecamatan *</label>
-                    <select name="id_kecamatan" id="kecamatan" class="form-select" required>
-                        <?php foreach ($kecamatan as$k): ?>
-                            <option value="<?= $k['id_kecamatan'] ?>" <?= $k['id_kecamatan'] == $data['id_kecamatan'] ? 'selected' : '' ?>><?= htmlspecialchars($k['nama_kecamatan']) ?></option>
+                    <select name="id_kecamatan" id="id_kecamatan" class="form-select" required>
+                        <option value="">-- Pilih Kecamatan --</option>
+                        <?php foreach ($kecamatan_list as $k): ?>
+                            <option value="<?= $k['id_kecamatan'] ?>" <?= ($cur_kecamatan == $k['id_kecamatan']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($k['nama_kecamatan']) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
 
-                <div class="col-md-4">
-                    <label class="form-label">Kelurahan</label>
-                    <select name="id_kelurahan" id="kelurahan" class="form-select">
+                <div class="col-md-6">
+                    <label class="form-label">Kelurahan <small class="text-muted">(Opsional)</small></label>
+                    <select name="id_kelurahan" id="id_kelurahan" class="form-select">
                         <option value="">-- Pilih Kelurahan --</option>
-                        <?php foreach ($kelurahan as$l): ?>
-                            <option value="<?= $l['id_kelurahan'] ?>" <?= $l['id_kelurahan'] == $data['id_kelurahan'] ? 'selected' : '' ?>><?= htmlspecialchars($l['nama_kelurahan']) ?></option>
-                        <?php endforeach; ?>
                     </select>
                 </div>
 
                 <div class="col-12">
-                    <label class="form-label">Deskripsi Potensi *</label>
-                    <textarea name="deskripsi" class="form-control" rows="3" required><?= htmlspecialchars($data['deskripsi']) ?></textarea>
+                    <label class="form-label">Deskripsi Potensi Investasi *</label>
+                    <textarea name="deskripsi" class="form-control" rows="3" required><?= htmlspecialchars($_POST['deskripsi'] ?? $pot['deskripsi']) ?></textarea>
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label">Kondisi Eksisting</label>
-                    <textarea name="kondisi_eksisting" class="form-control" rows="2"><?= htmlspecialchars($data['kondisi_eksisting'] ?? '') ?></textarea>
+                    <textarea name="kondisi_eksisting" class="form-control" rows="2"><?= htmlspecialchars($_POST['kondisi_eksisting'] ?? ($pot['kondisi_eksisting'] ?? '')) ?></textarea>
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label">Peluang Investasi</label>
-                    <textarea name="peluang_investasi" class="form-control" rows="2"><?= htmlspecialchars($data['peluang_investasi'] ?? '') ?></textarea>
+                    <textarea name="peluang_investasi" class="form-control" rows="2"><?= htmlspecialchars($_POST['peluang_investasi'] ?? ($pot['peluang_investasi'] ?? '')) ?></textarea>
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label">Kendala</label>
-                    <textarea name="kendala" class="form-control" rows="2"><?= htmlspecialchars($data['kendala'] ?? '') ?></textarea>
+                    <textarea name="kendala" class="form-control" rows="2"><?= htmlspecialchars($_POST['kendala'] ?? ($pot['kendala'] ?? '')) ?></textarea>
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label">Rekomendasi</label>
-                    <textarea name="rekomendasi" class="form-control" rows="2"><?= htmlspecialchars($data['rekomendasi'] ?? '') ?></textarea>
+                    <textarea name="rekomendasi" class="form-control" rows="2"><?= htmlspecialchars($_POST['rekomendasi'] ?? ($pot['rekomendasi'] ?? '')) ?></textarea>
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-8">
                     <label class="form-label">Sumber Data</label>
-                    <input type="text" name="sumber_data" class="form-control" value="<?= htmlspecialchars($data['sumber_data'] ?? '') ?>">
+                    <input type="text" name="sumber_data" class="form-control" value="<?= htmlspecialchars($_POST['sumber_data'] ?? ($pot['sumber_data'] ?? '')) ?>">
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label">Tahun Data</label>
-                    <input type="number" name="tahun_data" class="form-control" value="<?= htmlspecialchars($data['tahun_data'] ?? '2026') ?>">
+                    <input type="number" name="tahun_data" class="form-control" min="2000" max="2099" value="<?= htmlspecialchars($_POST['tahun_data'] ?? ($pot['tahun_data'] ?? '')) ?>">
                 </div>
 
-                <div class="col-12 mt-3 d-flex gap-2">
-                    <button type="submit" class="btn btn-warning"><i class="bi bi-save me-1"></i> Simpan Perubahan</button>
-                    <button type="reset" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i> Reset Form</button>
+                <div class="col-12 mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-warning"><i class="bi bi-save me-1"></i> Update Potensi</button>
+                    <a href="potensi.php" class="btn btn-secondary"><i class="bi bi-x-circle me-1"></i> Batal</a>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    document.getElementById('kecamatan').addEventListener('change', function() {
-        let idKec = this.value;
-        let kelSelect = document.getElementById('kelurahan');
-        if (!idKec) {
-            kelSelect.innerHTML = '<option value="">-- Pilih Kelurahan --</option>';
-            return;
+    const allKelurahan = <?= json_encode($kelurahan_list) ?>;
+    const selectedKelurahan = "<?= htmlspecialchars($cur_kelurahan ?? '') ?>";
+
+    function filterKelurahan(idKec, preselect = '') {
+        let html = '<option value="">-- Pilih Kelurahan --</option>';
+        allKelurahan.forEach(function(item) {
+            if (String(item.id_kecamatan) === String(idKec)) {
+                let sel = (String(item.id_kelurahan) === String(preselect)) ? 'selected' : '';
+                html += `<option value="${item.id_kelurahan}" ${sel}>${item.nama_kelurahan}</option>`;
+            }
+        });
+        $('#id_kelurahan').html(html);
+    }
+
+    $(document).ready(function() {
+        let initKec = $('#id_kecamatan').val();
+        if (initKec) {
+            filterKelurahan(initKec, selectedKelurahan);
         }
-        fetch('get_kelurahan.php?id_kecamatan=' + idKec)
-            .then(res => res.json())
-            .then(data => {
-                let html = '<option value="">-- Pilih Kelurahan --</option>';
-                data.forEach(item => {
-                    html += `<option value="${item.id_kelurahan}">${item.nama_kelurahan}</option>`;
-                });
-                kelSelect.innerHTML = html;
-            });
+
+        $('#id_kecamatan').on('change', function() {
+            filterKelurahan($(this).val());
+        });
     });
 </script>
 </body>
