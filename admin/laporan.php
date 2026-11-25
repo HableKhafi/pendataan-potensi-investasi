@@ -171,11 +171,11 @@ $rincian_tahun =$stmt_rincian_t->fetchAll();
                     <i class="bi bi-grid-fill me-1"></i> Rekap per Sektor
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
+            <!-- <li class="nav-item" role="presentation">
                 <button class="nav-link fw-semibold <?= $active_tab === 'wilayah' ? 'active' : '' ?>" id="wilayah-tab" data-bs-toggle="tab" data-bs-target="#tab-wilayah" type="button" role="tab">
                     <i class="bi bi-geo-alt-fill me-1"></i> Rekap per Wilayah
                 </button>
-            </li>
+            </li> -->
             <li class="nav-item" role="presentation">
                 <button class="nav-link fw-semibold <?= $active_tab === 'tahun' ? 'active' : '' ?>" id="tahun-tab" data-bs-toggle="tab" data-bs-target="#tab-tahun" type="button" role="tab">
                     <i class="bi bi-calendar-check-fill me-1"></i> Rekap per Tahun

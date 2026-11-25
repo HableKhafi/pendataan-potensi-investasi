@@ -195,7 +195,7 @@ $cur_kelurahan = $_POST['id_kelurahan'] ?? $pot['id_kelurahan'];
 
                 <div class="col-12 mt-4 d-flex gap-2">
                     <button type="submit" class="btn btn-warning"><i class="bi bi-save me-1"></i> Update Potensi</button>
-                    <a href="potensi.php" class="btn btn-secondary"><i class="bi bi-x-circle me-1"></i> Batal</a>
+                    <button type="reset" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i> Reset Form</button>
                 </div>
             </form>
         </div>

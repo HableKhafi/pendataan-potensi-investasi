@@ -169,7 +169,7 @@ $pegawai_list   = $pdo->query("SELECT id_pegawai, nama_pegawai, status_pegawai, 
 
                 <div class="col-12 mt-4 d-flex gap-2">
                     <button type="submit" class="btn btn-success"><i class="bi bi-save me-1"></i> Simpan Potensi</button>
-                    <a href="potensi.php" class="btn btn-secondary"><i class="bi bi-x-circle me-1"></i> Batal</a>
+                    <button type="reset" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i> Reset Form</button>
                 </div>
             </form>
         </div>
